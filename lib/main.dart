@@ -52,7 +52,7 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false, 
       home: Scaffold(
-        body: ReorderableListView(
+        body: ListView(
           children: [
             for (int x=0; x<size; x++) ...[
               JsonValue(
@@ -62,7 +62,6 @@ class _MainAppState extends State<MainApp> {
                 k: decoded is Map 
                     ? decoded.keys.elementAt(x)
                     : null,
-                idx: "$x",
               )
             ]
           ],

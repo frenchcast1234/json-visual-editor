@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 class JsonValue extends StatefulWidget {
   final String? k; // key
   final dynamic v; // value
-  final String idx; // Index
 
   const JsonValue({
     super.key,
     required this.v,
     this.k = null,
-    required this.idx
   });
 
   @override
@@ -34,7 +32,6 @@ class _JsonValueState extends State<JsonValue> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: Key("${widget.idx}"),
       leading: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc),
       title: Text(
         widget.k == null
