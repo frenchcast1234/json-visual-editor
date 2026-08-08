@@ -23,15 +23,30 @@ class _JsonListState extends State<JsonList> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(Icons.list),
-      title: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.k != null) ... [ Text(widget.k!) ],
-          Column(
-            children: create(widget.v)
+      title: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              width: 1.0,
+              color: Colors.black
+            )
           )
-        ]
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.k != null) ... [
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+                child: Text(widget.k!),
+              ) 
+            ],
+            Column(
+              children: create(widget.v)
+            )
+          ]
+        ),
       )
     );
   }
@@ -42,7 +57,7 @@ class _JsonListState extends State<JsonList> {
     for (dynamic x in m) {
       if (x is Map) { l.add(JsonMap(v: x, k: null)); }
       else if (x is List) { l.add(JsonList(v: x, k: null)); }
-      else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x)); }
+      else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x, bottomBorder: false,)); }
     }
 
     return l;

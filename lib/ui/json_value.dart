@@ -7,10 +7,12 @@ enum CurrentState {
 
 class JsonValue extends StatefulWidget {
   dynamic v; // value
+  final bool bottomBorder;
 
   JsonValue({
     super.key,
     required this.v,
+    this.bottomBorder = true
   });
 
   @override
@@ -44,10 +46,28 @@ class _JsonValueState extends State<JsonValue> {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc),
-      title: content,
-      onTap: _onTap
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc),
+          title: content,
+          onTap: _onTap
+        ),
+        if (widget.bottomBorder) ...[
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.black,
+                  width: 1.0
+                )
+              )
+            ),
+            margin: EdgeInsets.symmetric(horizontal: 16),
+          )
+        ]
+      ],
     );
   }
 

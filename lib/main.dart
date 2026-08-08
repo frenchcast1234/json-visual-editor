@@ -80,13 +80,13 @@ class _MainAppState extends State<MainApp> {
       m.forEach((key, value) {
         if (value is Map) { l.add(JsonMap(v: value, k: key)); }
         if (value is List) { l.add(JsonList(v: value, k: key)); }
-        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(k: key, v: value)); }
+        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(k: key, v: value, bottomBorder: false,)); }
       });
     } else if (m is List) { // Root
       for (dynamic x in m) {
         if (x is List) { l.add(JsonList(v: x, k: null)); }
         if (x is Map) { l.add(JsonMap(v: x, k: null)); }
-        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x)); }
+        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x, bottomBorder: false,)); }
       }
     }
 

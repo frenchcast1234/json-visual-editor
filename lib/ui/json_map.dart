@@ -23,15 +23,39 @@ class _JsonMapState extends State<JsonMap> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(Icons.map),
-      title: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.k != null) ... [ Text(widget.k!) ],
-          Column(
-            children: create(widget.v)
+      title: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              width: 1.0
+            )
           )
-        ]
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Container(
+            //   width: double.infinity,
+            //   decoration: BoxDecoration(
+            //     border: Border(
+            //       top: BorderSide(
+            //         width: 1.0
+            //       )
+            //     )
+            //   ),
+            // ),
+            if (widget.k != null) ... [
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+                child: Text(widget.k!),
+              )
+            ],
+            Column(
+              children: create(widget.v)
+            )
+          ]
+        ),
       ),
     );
   }
@@ -42,7 +66,7 @@ class _JsonMapState extends State<JsonMap> {
     m.forEach((key, value) {
       if (value is Map) { l.add(JsonMap(k: key, v: value)); }
       else if (value is List) { l.add(JsonList(v: value, k: key)); }
-      else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(k: key, v: value)); }
+      else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(k: key, v: value, bottomBorder: false)); }
     });
 
     return l;
