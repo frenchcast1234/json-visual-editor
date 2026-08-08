@@ -17,3 +17,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: CascadiaMono
+      fonts:
+      - asset: assets/cascadia-variable.ttf
+      - asset: assets/cascadia-italic-variable.ttf
+        style: italic

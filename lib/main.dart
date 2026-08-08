@@ -65,6 +65,7 @@ class _MainAppState extends State<MainApp> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false, 
+      theme: ThemeData(fontFamily: "CascadiaMono"),
       home: Scaffold(
         body: ListView(
           children: create(decoded)
