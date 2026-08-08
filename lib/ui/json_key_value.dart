@@ -5,21 +5,22 @@ enum CurrentState {
   edit
 }
 
-class JsonValue extends StatefulWidget {
-  dynamic v; // value
+class JsonKeyValue extends StatefulWidget {
+  String k;
+  dynamic v;
 
-  JsonValue({
+  JsonKeyValue({
     super.key,
-    required this.v,
+    required this.k,
+    required this.v
   });
 
   @override
-  State<JsonValue> createState() => _JsonValueState();
+  State<JsonKeyValue> createState() => _JsonKeyValueState();
 }
 
-class _JsonValueState extends State<JsonValue> {
-  @override
-  JsonValue get widget => super.widget;
+class _JsonKeyValueState extends State<JsonKeyValue> {
+  JsonKeyValue get widget => super.widget;
 
   final Map<Type, IconData> iconsType = {
     int: Icons.numbers,
@@ -30,6 +31,7 @@ class _JsonValueState extends State<JsonValue> {
     Map: Icons.map,
     Null: Icons.close
   };
+
   final TextEditingController _controller = TextEditingController();
 
   late Widget content;
@@ -39,7 +41,7 @@ class _JsonValueState extends State<JsonValue> {
   void initState() {
     super.initState();
 
-    content = Text("${widget.v}");
+    content = Text("${widget.k} : ${widget.v}");
   }
 
   @override
@@ -61,14 +63,14 @@ class _JsonValueState extends State<JsonValue> {
           onSubmitted: (value) => setState(() {
             widget.v = value;
             currentState = CurrentState.title;
-            content = Text("${widget.v}");
+            content = Text("${widget.k} : ${widget.v}");
           }),
         );
       });
     } else if (currentState == CurrentState.edit) {
       currentState == CurrentState.title;
       setState(() {
-        content = Text("${widget.v}");
+        content = Text("${widget.k} : ${widget.v}");
       });
     }
   }
