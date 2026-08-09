@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:menu_bar/menu_bar.dart';
 import 'dart:convert';
@@ -76,12 +77,31 @@ class _MainAppState extends State<MainApp> {
                 MenuButton(
                   text: const Text("Open file"),
                   icon: const Icon(Icons.open_in_new),
-                  onTap: () => print("open file")
+                  onTap: () async {
+                    FilePickerResult? result = await FilePicker.pickFiles(
+                      allowMultiple: false,
+                      type: FileType.custom,
+                      allowedExtensions: ["json"]
+                    );
+
+                    if (result != null) {
+                      PlatformFile file = result.files.first;
+                      print(file.path);
+                      File f = File(file.path!);
+                      print(f.readAsString());
+                      String tmp = await f.readAsString();
+                      setState(() {
+                        template = tmp;
+                      });
+                    }
+                  }
                 ),
                 MenuButton(
                   text: const Text("Save file"),
                   icon: const Icon(Icons.save),
-                  onTap: () => print("save file")
+                  onTap: () async {
+                    
+                  }
                 )
               ]
             )
