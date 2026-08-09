@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  menu_bar: ^0.5.3
+  file: ^7.0.1
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:menu_bar/menu_bar.dart';
 import 'dart:convert';
 import 'dart:core';
 
@@ -62,14 +63,35 @@ class _MainAppState extends State<MainApp> {
     } else if (tmp.toString().startsWith("[")) {
       decoded = tmp as List;
     }
-
+  
     return MaterialApp(
       debugShowCheckedModeBanner: false, 
       theme: ThemeData(fontFamily: "CascadiaMono"),
-      home: Scaffold(
-        body: ListView(
-          children: create(decoded)
-        )
+      home: MenuBarWidget(
+        barButtons: [
+          BarButton(
+            text: const Text("File"), 
+            submenu: SubMenu(
+              menuItems: [
+                MenuButton(
+                  text: const Text("Open file"),
+                  icon: const Icon(Icons.open_in_new),
+                  onTap: () => print("open file")
+                ),
+                MenuButton(
+                  text: const Text("Save file"),
+                  icon: const Icon(Icons.save),
+                  onTap: () => print("save file")
+                )
+              ]
+            )
+          )
+        ],
+        child: Scaffold(
+          body: ListView(
+            children: create(decoded)
+          )
+        ),
       ),
     );
   }
