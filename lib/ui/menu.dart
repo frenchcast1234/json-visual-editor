@@ -17,7 +17,7 @@ class _MenuState extends State<Menu> {
   final ValueNotifier<String> c = ValueNotifier<String>("{}");
   late final GlobalKey<EditorState> _editorKey = GlobalKey<EditorState>();
   late Editor editor = Editor(key: _editorKey, content: c);
-  late String? path;
+  String? path;
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +52,25 @@ class _MenuState extends State<Menu> {
                 onTap: () async {
                   var file = File(path ?? "");
                   file.writeAsString(json.encode(_editorKey.currentState?.save()));
-                  
-
                 },
               ),
+              MenuButton(
+                text: const Text("Save as"),
+                icon: const Icon(Icons.save_as),
+                onTap: () async {
+                  if (path == null) return;
+
+                  String? outputFile = await FilePicker.saveFile(
+                    dialogTitle: "Please select an output file",
+                    fileName: "output.json"
+                  );
+
+                  if (outputFile == null) return;
+
+                  var file = File(outputFile);
+                  file.writeAsString(json.encode(_editorKey.currentState?.save()));
+                }
+              )
             ],
           ),
         ),
