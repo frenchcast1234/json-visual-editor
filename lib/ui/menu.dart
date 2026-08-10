@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:json_visual_editor/pages/editor.dart';
+import 'package:json_visual_editor/ui/tab_bar.dart';
 import 'package:menu_bar/menu_bar.dart';
 
 class Menu extends StatefulWidget {
@@ -14,10 +15,7 @@ class Menu extends StatefulWidget {
 }
 
 class _MenuState extends State<Menu> {
-  final ValueNotifier<String> c = ValueNotifier<String>("{}");
-  late final GlobalKey<EditorState> _editorKey = GlobalKey<EditorState>();
-  late Editor editor = Editor(key: _editorKey, content: c);
-  String? path;
+  late final GlobalKey<TabBarEditorState> _tabBarKey = GlobalKey<TabBarEditorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +39,7 @@ class _MenuState extends State<Menu> {
                     PlatformFile file = result.files.first;
                     File f = File(file.path!);
                     String tmp = await f.readAsString();
-                    c.value = tmp;
-                    path = file.path;
+                    _tabBarKey.currentState?.addTab(tmp, file.name, file.path!);
                   }
                 },
               ),
@@ -50,16 +47,16 @@ class _MenuState extends State<Menu> {
                 text: const Text("Save file"),
                 icon: const Icon(Icons.save),
                 onTap: () async {
-                  var file = File(path ?? "");
-                  file.writeAsString(json.encode(_editorKey.currentState?.save()));
+                  print('save');
+                  var file = File(_tabBarKey.currentState!.path());
+                  file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
+                  print(_tabBarKey.currentState?.save());
                 },
               ),
               MenuButton(
                 text: const Text("Save as"),
                 icon: const Icon(Icons.save_as),
                 onTap: () async {
-                  if (path == null) return;
-
                   String? outputFile = await FilePicker.saveFile(
                     dialogTitle: "Please select an output file",
                     fileName: "output.json"
@@ -68,14 +65,14 @@ class _MenuState extends State<Menu> {
                   if (outputFile == null) return;
 
                   var file = File(outputFile);
-                  file.writeAsString(json.encode(_editorKey.currentState?.save()));
+                  file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
                 }
               )
             ],
           ),
         ),
       ],
-      child: editor,
+      child: TabBarEditor(key: _tabBarKey),
     );
   }
 }

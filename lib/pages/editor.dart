@@ -8,10 +8,12 @@ import 'package:json_visual_editor/ui/json_value.dart';
 
 class Editor extends StatefulWidget {
   final ValueNotifier<String?> content;
+  final String path;
 
   Editor({
     super.key,
-    required this.content
+    required this.content,
+    required this.path
   });
 
   @override
@@ -62,7 +64,7 @@ class EditorState extends State<Editor> {
     
     widget.content.addListener(() {
       setState(() {
-        dynamic tmp = json.decode(widget.content.value!);
+        dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
     
         if (tmp.toString().startsWith("{")) {
           decoded = tmp as Map;
@@ -73,21 +75,13 @@ class EditorState extends State<Editor> {
       });
     });
 
-    dynamic tmp = json.decode(widget.content.value!);
-    
+    dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
     if (tmp.toString().startsWith("{")) {
       decoded = tmp as Map;
     } else if (tmp.toString().startsWith("[")) {
       decoded = tmp as List;
     }
     root = create(decoded);
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    widget.content.dispose();
   }
 
   @override
@@ -115,8 +109,6 @@ class EditorState extends State<Editor> {
         else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x, bottomBorder: false,)); }
       }
     }
-
-    if (l.isEmpty) l.add(Center(child: Text("JSON is empty.")));
 
     return l;
   }
@@ -148,5 +140,9 @@ class EditorState extends State<Editor> {
     }
 
     return r;
+  }
+
+  String path() {
+    return widget.path;
   }
 }
