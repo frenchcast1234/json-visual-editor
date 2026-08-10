@@ -7,7 +7,7 @@ import 'package:json_visual_editor/ui/json_map.dart';
 import 'package:json_visual_editor/ui/json_value.dart';
 
 class Editor extends StatefulWidget {
-  String? content;
+  final ValueNotifier<String?> content;
 
   Editor({
     super.key,
@@ -15,10 +15,10 @@ class Editor extends StatefulWidget {
   });
 
   @override
-  State<Editor> createState() => _EditorState();
+  State<Editor> createState() => EditorState();
 }
 
-class _EditorState extends State<Editor> {
+class EditorState extends State<Editor> {
   Editor get widget => super.widget;
 
   String template = r"""
@@ -54,28 +54,47 @@ class _EditorState extends State<Editor> {
 """;
 
   var decoded;
+  List<Widget> root = [];
   
   @override
   void initState() {
     super.initState();
-    print("print");
-    widget.content = widget.content ?? template;
+    
+    widget.content.addListener(() {
+      setState(() {
+        dynamic tmp = json.decode(widget.content.value!);
+    
+        if (tmp.toString().startsWith("{")) {
+          decoded = tmp as Map;
+        } else if (tmp.toString().startsWith("[")) {
+          decoded = tmp as List;
+        }
+        root = create(decoded);
+      });
+    });
 
-    dynamic tmp = json.decode(widget.content!);
+    dynamic tmp = json.decode(widget.content.value!);
     
     if (tmp.toString().startsWith("{")) {
       decoded = tmp as Map;
     } else if (tmp.toString().startsWith("[")) {
       decoded = tmp as List;
     }
+    root = create(decoded);
+  }
 
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    widget.content.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
-        children: create(decoded)
+        children: root
       )
     );
   }
@@ -100,5 +119,34 @@ class _EditorState extends State<Editor> {
     if (l.isEmpty) l.add(Center(child: Text("JSON is empty.")));
 
     return l;
+  }
+
+  dynamic save() { // Return Map|List
+    var r; // r=return
+    if (decoded is Map) { r = {}; }
+    else if (decoded is List) { r = []; }
+
+    for (dynamic k in root) {
+      if (k is JsonMap || k is JsonList) {
+        if (r is Map) {
+          r[k.k] = k.getKey().currentState?.rtn();
+        } else if (r is List) {
+          r.add(k.getKey().currentState?.rtn());
+        }
+      } else if (k is JsonKeyValue && r is Map) {
+        r[k.k] = k.v;
+      } else if (k is JsonValue && r is List) {
+        r.add(k.v);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Panic"),
+            duration: Duration(seconds: 3),
+          )
+        );
+      }
+    }
+
+    return r;
   }
 }

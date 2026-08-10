@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,10 @@ class Menu extends StatefulWidget {
 }
 
 class _MenuState extends State<Menu> {
-  String c = "{}";
+  final ValueNotifier<String> c = ValueNotifier<String>("{}");
+  late final GlobalKey<EditorState> _editorKey = GlobalKey<EditorState>();
+  late Editor editor = Editor(key: _editorKey, content: c);
+  late String? path;
 
   @override
   Widget build(BuildContext context) {
@@ -37,22 +41,26 @@ class _MenuState extends State<Menu> {
                     PlatformFile file = result.files.first;
                     File f = File(file.path!);
                     String tmp = await f.readAsString();
-                    setState(() {
-                      c = tmp;
-                    });
+                    c.value = tmp;
+                    path = file.path;
                   }
                 },
               ),
               MenuButton(
                 text: const Text("Save file"),
                 icon: const Icon(Icons.save),
-                onTap: () async {},
+                onTap: () async {
+                  var file = File(path ?? "");
+                  file.writeAsString(json.encode(_editorKey.currentState?.save()));
+                  
+
+                },
               ),
             ],
           ),
         ),
       ],
-      child: Editor(key: ValueKey(c), content: c),
+      child: editor,
     );
   }
 }

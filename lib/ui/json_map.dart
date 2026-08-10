@@ -3,21 +3,30 @@ import 'package:json_visual_editor/ui/json_list.dart';
 import 'json_key_value.dart';
 
 class JsonMap extends StatefulWidget {
-  final String? k;
   final Map v;
+  final String? k;
+  final GlobalKey<JsonMapState> stateKey;
 
-  const JsonMap({
-    super.key,
+  const JsonMap._({
+    required this.stateKey,
     required this.v,
     required this.k,
-  });
+  }) : super(key: stateKey);
+
+  factory JsonMap({required Map v, required String? k}) {
+    final stateKey = GlobalKey<JsonMapState>();
+    return JsonMap._(stateKey: stateKey, v: v, k: k);
+  }
+
+  GlobalKey<JsonMapState> getKey() => stateKey;
 
   @override
-  State<JsonMap> createState() => _JsonMapState();
+  State<JsonMap> createState() => JsonMapState();
 }
 
-class _JsonMapState extends State<JsonMap> {
+class JsonMapState extends State<JsonMap> {
   JsonMap get widget => super.widget;
+  late List<Widget> content = create(widget.v);
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +61,7 @@ class _JsonMapState extends State<JsonMap> {
               )
             ],
             Column(
-              children: create(widget.v)
+              children: content
             )
           ]
         ),
@@ -70,5 +79,19 @@ class _JsonMapState extends State<JsonMap> {
     });
 
     return l;
+  }
+  
+  Map<String, dynamic> rtn() { 
+    Map<String, dynamic> r = {};
+
+    for (dynamic g in content) { // Random variable name
+      if (g is JsonKeyValue) {
+        r[g.k] = g.v;
+      } else if (g is JsonMap || g is JsonList) {
+        r[g.k] = g.getKey().currentState!.rtn();
+      }
+    }
+
+    return r;
   }
 }
