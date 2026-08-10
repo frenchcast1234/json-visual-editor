@@ -80,7 +80,12 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
         content = TextField(
           controller: _controller,
           onSubmitted: (value) => setState(() {
-            widget.v = value;
+            if (int.tryParse(value) != null) { widget.v = int.parse(value); }
+            else if (double.tryParse(value) != null) { widget.v = double.parse(value); }
+            else if (value == "true") { widget.v = true; }
+            else if (value == "false") { widget.v = false; }
+            else if (value == "null") { widget.v = null; }
+            else { widget.v = value; }
             currentState = CurrentState.title;
             content = Text("${widget.k} : ${widget.v}");
           }),
