@@ -13,7 +13,7 @@ class Editor extends StatefulWidget {
   Editor({
     super.key,
     required this.content,
-    required this.path
+    required this.path,
   });
 
   @override
@@ -98,15 +98,15 @@ class EditorState extends State<Editor> {
 
     if (m is Map) { // Root
       m.forEach((key, value) {
-        if (value is Map) { l.add(JsonMap(v: value, k: key)); }
-        if (value is List) { l.add(JsonList(v: value, k: key)); }
-        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(k: key, v: value, bottomBorder: false,)); }
+        if (value is Map) { l.add(JsonMap(v: value, k: key, onDelete: removeChild)); }
+        if (value is List) { l.add(JsonList(v: value, k: key, onDelete: removeChild)); }
+        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, onDelete: removeChild)); }
       });
     } else if (m is List) { // Root
       for (dynamic x in m) {
-        if (x is List) { l.add(JsonList(v: x, k: null)); }
-        if (x is Map) { l.add(JsonMap(v: x, k: null)); }
-        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x, bottomBorder: false,)); }
+        if (x is List) { l.add(JsonList(v: x, k: null, onDelete: removeChild)); }
+        if (x is Map) { l.add(JsonMap(v: x, k: null, onDelete: removeChild)); }
+        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, onDelete: removeChild)); }
       }
     }
 
@@ -145,4 +145,6 @@ class EditorState extends State<Editor> {
   String path() {
     return widget.path;
   }
+
+  void removeChild(Widget child) => setState(() => root = List.of(root)..remove(child));
 }

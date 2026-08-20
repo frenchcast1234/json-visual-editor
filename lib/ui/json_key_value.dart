@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 
 enum CurrentState {
   title,
@@ -8,13 +9,14 @@ enum CurrentState {
 class JsonKeyValue extends StatefulWidget {
   String k;
   dynamic v;
-  final bool bottomBorder;
+
+  final void Function(Widget child)? onDelete;
 
   JsonKeyValue({
     super.key,
     required this.k,
     required this.v,
-    this.bottomBorder = true
+    this.onDelete
   });
 
   @override
@@ -48,27 +50,30 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          leading: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc),
-          title: content,
-          onTap: _onTap
-        ),
-        if (widget.bottomBorder) ...[
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black,
-                  width: 1.0
-                )
-              )
-            ),
-          )
-        ]
-      ],
+    return ListTile(
+      leading: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onSecondaryTapDown: (TapDownDetails details) async {
+          showContextMenu<String>(
+            context, 
+            contextMenu: ContextMenu<String>(
+              entries: [
+                MenuItem<String>(
+                  label: Text("Delete element"),
+                  icon: Icon(Icons.delete),
+                  value: "delete",
+                  onSelected: (_) => widget.onDelete?.call(widget)
+                ),
+              ],
+              position: details.globalPosition,
+              padding: EdgeInsets.all(8.0)
+            )
+          );
+        },
+        child: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc)
+      ),
+      title: content,
+      onTap: _onTap
     );
   }
 

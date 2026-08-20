@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'json_value.dart';
 import 'json_map.dart';
 
@@ -7,15 +8,18 @@ class JsonList extends StatefulWidget {
   final String? k;
   final GlobalKey<JsonListState> stateKey;
 
+  final void Function(Widget child)? onDelete;
+
   const JsonList._({
     required this.stateKey,
     required this.v,
     required this.k,
+    this.onDelete
   }) : super(key: stateKey);
 
-  factory JsonList({required List v, required String? k}) {
+  factory JsonList({required List v, required String? k, void Function(Widget)? onDelete}) {
     final stateKey = GlobalKey<JsonListState>();
-    return JsonList._(stateKey: stateKey, v: v, k: k);
+    return JsonList._(stateKey: stateKey, v: v, k: k, onDelete: onDelete);
   }
 
   GlobalKey<JsonListState> getKey() => stateKey;
@@ -31,7 +35,51 @@ class JsonListState extends State<JsonList> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(Icons.list),
+      leading: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onSecondaryTapDown: (TapDownDetails details) async {
+          showContextMenu<String>(
+            context, 
+            contextMenu: ContextMenu<String>(
+              entries: [
+                MenuItem<String>(
+                  label: Text("Insert value"),
+                  icon: Icon(Icons.add),
+                  value: "value",
+                  onSelected: (value) => setState(() {
+                    content.add(JsonValue(key: UniqueKey(), v: "new value", onDelete: removeChild));
+                  })
+                ),
+                MenuItem<String>(
+                  label: Text("Insert list"),
+                  icon: Icon(Icons.add),
+                  value: "list",
+                  onSelected: (value) => setState(() {
+                    content.add(JsonList(v: [], k: null, onDelete: removeChild));
+                  }),
+                ),
+                MenuItem<String>(
+                  label: Text("Insert map"),
+                  icon: Icon(Icons.add),
+                  value: "map",
+                  onSelected: (value) => setState(() {
+                    content.add(JsonMap(v: {}, k: null, onDelete: removeChild));
+                  }),
+                ),
+                MenuItem<String>(
+                  label: Text("Delete element"),
+                  icon: Icon(Icons.delete),
+                  value: "delete",
+                  onSelected: (_) => widget.onDelete?.call(widget)
+                ),
+              ],
+              position: details.globalPosition,
+              padding: EdgeInsets.all(8.0)
+            )
+          );
+        },
+        child: Icon(Icons.list)
+      ),
       title: Container(
         decoration: BoxDecoration(
           border: Border(
@@ -64,9 +112,9 @@ class JsonListState extends State<JsonList> {
     List<Widget> l = [];
 
     for (dynamic x in m) {
-      if (x is Map) { l.add(JsonMap(v: x, k: null)); }
-      else if (x is List) { l.add(JsonList(v: x, k: null)); }
-      else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(v: x, bottomBorder: false,)); }
+      if (x is Map) { l.add(JsonMap(v: x, k: null, onDelete: removeChild)); }
+      else if (x is List) { l.add(JsonList(v: x, k: null, onDelete: removeChild)); }
+      else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, onDelete: removeChild,)); }
     }
 
     return l;
@@ -85,4 +133,6 @@ class JsonListState extends State<JsonList> {
 
     return r;
   }
+
+  void removeChild(Widget child) => setState(() => content.remove(child));
 }
