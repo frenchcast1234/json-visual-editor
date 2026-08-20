@@ -31,6 +31,7 @@ class JsonMap extends StatefulWidget {
 class JsonMapState extends State<JsonMap> {
   JsonMap get widget => super.widget;
   late List<Widget> content = create(widget.v);
+  late String k = widget.k ?? "key";
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +136,12 @@ class JsonMapState extends State<JsonMap> {
     for (dynamic g in content) { // Random variable name
       if (g is JsonKeyValue) {
         r[g.k] = g.v;
-      } else if (g is JsonMap || g is JsonList) {
-        r[g.k] = g.getKey().currentState!.rtn();
+      } else if (g is JsonMap) {
+        final s = g.getKey().currentState!;
+        r[s.getk()] = s.rtn();
+      } else if (g is JsonList) {
+        final s = g.getKey().currentState!;
+        r[s.getk()] = s.rtn();
       }
     }
 
@@ -144,4 +149,8 @@ class JsonMapState extends State<JsonMap> {
   }
 
   void removeChild(Widget child) => setState(() => content.remove(child));
+  
+  String getk() {
+    return k;
+  }
 }

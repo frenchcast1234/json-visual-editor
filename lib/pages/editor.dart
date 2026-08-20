@@ -120,10 +120,11 @@ class EditorState extends State<Editor> {
 
     for (dynamic k in root) {
       if (k is JsonMap || k is JsonList) {
+        final s = k.getKey().currentState!;
         if (r is Map) {
-          r[k.k] = k.getKey().currentState?.rtn();
+          r[s.getk()] = s.rtn();
         } else if (r is List) {
-          r.add(k.getKey().currentState?.rtn());
+          r.add(s.rtn());
         }
       } else if (k is JsonKeyValue && r is Map) {
         r[k.k] = k.v;

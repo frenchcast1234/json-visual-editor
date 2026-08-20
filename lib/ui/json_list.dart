@@ -3,6 +3,11 @@ import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'json_value.dart';
 import 'json_map.dart';
 
+enum CurrentState {
+  edit,
+  title
+}
+
 class JsonList extends StatefulWidget {
   final List v;
   final String? k;
@@ -31,6 +36,9 @@ class JsonList extends StatefulWidget {
 class JsonListState extends State<JsonList> {
   JsonList get widget => super.widget;
   late List<Widget> content = create(widget.v);
+  late String k = widget.k ?? "key";
+  CurrentState currentState = CurrentState.title;
+  late final TextEditingController _kController = TextEditingController(text: k);
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +75,14 @@ class JsonListState extends State<JsonList> {
                   }),
                 ),
                 MenuItem<String>(
+                  label: Text("Edit key"),
+                  icon: Icon(Icons.edit),
+                  value: "edit",
+                  onSelected: (value) => setState(() {
+                    currentState = currentState == CurrentState.title ? CurrentState.edit : CurrentState.title; 
+                  }),
+                ),
+                MenuItem<String>(
                   label: Text("Delete element"),
                   icon: Icon(Icons.delete),
                   value: "delete",
@@ -96,11 +112,22 @@ class JsonListState extends State<JsonList> {
             if (widget.k != null) ... [
               Padding(
                 padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-                child: Text(widget.k!),
+                child: currentState == CurrentState.title
+                    ? Text(k)
+                    : TextField(
+                      controller: _kController,
+                      onSubmitted: (value) => setState(() {
+                        var oldk = k;
+                        k = value.trim().isEmpty ? oldk : value;
+                        currentState = CurrentState.title;
+                      }),
+                    )
               ) 
             ],
             Column(
-              children: content
+              children: content.isEmpty 
+                  ? [ SizedBox(height: 16) ]
+                  : content
             )
           ]
         ),
@@ -132,6 +159,10 @@ class JsonListState extends State<JsonList> {
     }
 
     return r;
+  }
+
+  String getk() {
+    return k;
   }
 
   void removeChild(Widget child) => setState(() => content.remove(child));

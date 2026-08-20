@@ -28,7 +28,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: editors.length == 0
+      appBar: editors.isEmpty
           ? null
           : AppBar(
             title: null,

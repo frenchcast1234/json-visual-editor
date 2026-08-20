@@ -37,6 +37,7 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
   };
 
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller2 = TextEditingController();
 
   late Widget content;
   CurrentState currentState = CurrentState.title;
@@ -58,6 +59,33 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
             context, 
             contextMenu: ContextMenu<String>(
               entries: [
+                MenuItem<String>(
+                  label: Text("Edit key"),
+                  icon: Icon(Icons.edit),
+                  value: "edit",
+                  onSelected: (_) => setState(() {
+                    if (currentState == CurrentState.title) {
+                      currentState = CurrentState.edit;
+                      _controller2.text = widget.k;
+                      var oldk = widget.k;
+                      setState(() {
+                        content = TextField(
+                          controller: _controller2,
+                          onSubmitted: (value) => setState(() {
+                            widget.k = value.trim().isEmpty ? oldk : value;
+                            currentState = CurrentState.title;
+                            content = Text("${widget.k} : ${widget.v}");
+                          }),
+                        );
+                      });
+                    } else if (currentState == CurrentState.edit) {
+                      currentState == CurrentState.title;
+                      setState(() {
+                        content = Text("${widget.k} : ${widget.v}");
+                      });
+                    }
+                  })
+                ),
                 MenuItem<String>(
                   label: Text("Delete element"),
                   icon: Icon(Icons.delete),
