@@ -80,24 +80,35 @@ class _MenuState extends State<Menu>  {
                 text: const Text("Save file"),
                 icon: const Icon(Icons.save),
                 onTap: () async {
-                  String? path = _tabBarKey.currentState!.path();
-                  if (path == null) {
-                    String? outputFile = await FilePicker.saveFile(
+                  final tabBar = _tabBarKey.currentState;
+                  if (tabBar == null) return;
+
+                  String? path = tabBar.path();
+                  final isNew = path == null;
+
+                  if (isNew) {
+                    path = await FilePicker.saveFile(
                       dialogTitle: "Please select an output file",
                       fileName: "output.json"
                     );
-                    if (outputFile == null) return;
-                    path = outputFile;
+                    if (path == null) return;
                   }
-                  var file = File(path!);
-                  file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
-                  print(_tabBarKey.currentState?.save());
+
+                  await File(path).writeAsString(json.encode(tabBar.save()));
+
+                  if (isNew) {
+                    tabBar.rename(nameOf(path), path);
+                    await _pushRecentFile(path);
+                  }
                 },
               ),
               MenuButton(
                 text: const Text("Save as"),
                 icon: const Icon(Icons.save_as),
                 onTap: () async {
+                  final tabBar = _tabBarKey.currentState;
+                  if (tabBar == null) return;
+
                   String? outputFile = await FilePicker.saveFile(
                     dialogTitle: "Please select an output file",
                     fileName: "output.json"
@@ -105,8 +116,9 @@ class _MenuState extends State<Menu>  {
 
                   if (outputFile == null) return;
 
-                  var file = File(outputFile);
-                  file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
+                  await File(outputFile).writeAsString(json.encode(tabBar.save()));
+                  tabBar.rename(nameOf(outputFile), outputFile);
+                  await _pushRecentFile(outputFile);
                 }
               ),
               MenuButton(

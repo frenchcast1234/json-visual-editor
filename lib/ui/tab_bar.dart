@@ -85,4 +85,13 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
   String? path() {
     return editorKeys[_tabController.index].currentState!.path();
   }
+
+  /// Rattache l'onglet courant a [path] et met son titre a jour.
+  void rename(String name, String path) {
+    setState(() {
+      final i = _tabController.index;
+      editorKeys[i].currentState!.setPath(path);
+      names[i] = Tab(text: name);
+    });
+  }
 }

@@ -25,6 +25,9 @@ class Editor extends StatefulWidget {
 class EditorState extends State<Editor> {
   Editor get widget => super.widget;
 
+  /// Chemin courant du fichier : null tant qu'il n'a jamais ete enregistre.
+  late String? _path = widget.path;
+
   String template = r"""
 [
   "dog",
@@ -226,7 +229,11 @@ class EditorState extends State<Editor> {
   }
 
   String? path() {
-    return widget.path;
+    return _path;
+  }
+
+  void setPath(String path) {
+    _path = path;
   }
 
   void removeChild(Widget child) => setState(() => root = List.of(root)..remove(child));
