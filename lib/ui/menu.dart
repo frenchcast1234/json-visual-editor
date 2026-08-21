@@ -19,7 +19,7 @@ class Menu extends StatefulWidget {
 
 class _MenuState extends State<Menu>  {
   late final GlobalKey<TabBarEditorState> _tabBarKey = GlobalKey<TabBarEditorState>();
-  late SharedPreferences prefs;
+  SharedPreferences? prefs;
   final _fileName = RegExp(r'[^/\\]+$');
   
   @override void initState() {
@@ -28,9 +28,21 @@ class _MenuState extends State<Menu>  {
   }
 
   Future<void> _loadPrefs() async {
-  final p = await SharedPreferences.getInstance();
-  setState(() => prefs = p);
-}
+    final p = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => prefs = p);
+  }
+
+  /// Ajoute [path] en tete des fichiers recents, sans doublon.
+  Future<void> _pushRecentFile(String path) async {
+    final p = prefs;
+    if (p == null) return;
+
+    final recent = [path, ...?p.getStringList("recent_files")?.where((e) => e != path)];
+    await p.setStringList("recent_files", recent);
+    if (!mounted) return;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +67,7 @@ class _MenuState extends State<Menu>  {
                     File f = File(file.path!);
                     String tmp = await f.readAsString();
                     _tabBarKey.currentState?.addTab(tmp, file.name, file.path!);
-                    setState(() {
-                      prefs.setStringList("recent_files", (prefs.getStringList("recent_files") ?? [])..add(file.path!));
-                    });
+                    await _pushRecentFile(file.path!);
                   }
                 },
               ),
@@ -70,8 +80,16 @@ class _MenuState extends State<Menu>  {
                 text: const Text("Save file"),
                 icon: const Icon(Icons.save),
                 onTap: () async {
-                  print('save');
-                  var file = File(_tabBarKey.currentState!.path());
+                  String? path = _tabBarKey.currentState!.path();
+                  if (path == null) {
+                    String? outputFile = await FilePicker.saveFile(
+                      dialogTitle: "Please select an output file",
+                      fileName: "output.json"
+                    );
+                    if (outputFile == null) return;
+                    path = outputFile;
+                  }
+                  var file = File(path!);
                   file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
                   print(_tabBarKey.currentState?.save());
                 },
@@ -90,6 +108,13 @@ class _MenuState extends State<Menu>  {
                   var file = File(outputFile);
                   file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
                 }
+              ),
+              MenuButton(
+                text: const Text("New JSON file"),
+                icon: const Icon(Icons.open_in_new),
+                onTap: () {
+                  _tabBarKey.currentState?.addTab("", "Unsaved", null);
+                },
               )
             ],
           ),
@@ -114,7 +139,7 @@ class _MenuState extends State<Menu>  {
   List<MenuButton> getRecentFiles() {
     List<MenuButton> s = [];
 
-    for (String x in prefs.getStringList('recent_files') ?? []) {
+    for (String x in prefs?.getStringList('recent_files') ?? []) {
       s.add(
         MenuButton(
           text: Text(x),

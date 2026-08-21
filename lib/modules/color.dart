@@ -28,9 +28,17 @@ class Coolors {
 
   static Map<String, Color> Current(bool t) => t ? lightThemeColors : darkThemeColors;
 
-  static Color getPrimaryColor(bool t) => Current(t)["primary"]!;
-  static Color getDarkColor(bool t) => Current(t)["dark"]!;
-  static Color getSurfaceColor(bool t) => Current(t)["surface"]!;
-  static Color getAccentColor(bool t) => Current(t)["accent"]!;
-  static Color getHighlightColor(bool t) => Current(t)["highlight"]!;
+  /// Palette du theme actuellement applique, deduite du [BuildContext].
+  ///
+  /// A utiliser partout dans l'arbre de widgets ; `Current(bool)` n'est reserve
+  /// qu'a la construction du [ThemeData] dans main.dart, ou aucun [Theme]
+  /// n'est encore disponible.
+  static Map<String, Color> of(BuildContext context) =>
+      Current(Theme.of(context).brightness == Brightness.light);
+
+  static Color getPrimaryColor(BuildContext context) => of(context)["primary"]!;
+  static Color getDarkColor(BuildContext context) => of(context)["dark"]!;
+  static Color getSurfaceColor(BuildContext context) => of(context)["surface"]!;
+  static Color getAccentColor(BuildContext context) => of(context)["accent"]!;
+  static Color getHighlightColor(BuildContext context) => of(context)["highlight"]!;
 }

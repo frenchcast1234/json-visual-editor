@@ -1,14 +1,16 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:json_visual_editor/ui/json_key_value.dart';
 import 'package:json_visual_editor/ui/json_list.dart';
 import 'package:json_visual_editor/ui/json_map.dart';
 import 'package:json_visual_editor/ui/json_value.dart';
+import 'package:json_visual_editor/modules/color.dart';
 
 class Editor extends StatefulWidget {
   final ValueNotifier<String?> content;
-  final String path;
+  final String? path;
 
   Editor({
     super.key,
@@ -61,35 +63,115 @@ class EditorState extends State<Editor> {
   @override
   void initState() {
     super.initState();
-    
-    widget.content.addListener(() {
-      setState(() {
-        dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
-    
-        if (tmp.toString().startsWith("{")) {
-          decoded = tmp as Map;
-        } else if (tmp.toString().startsWith("[")) {
-          decoded = tmp as List;
-        }
-        root = create(decoded);
-      });
-    });
 
-    dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
-    if (tmp.toString().startsWith("{")) {
-      decoded = tmp as Map;
-    } else if (tmp.toString().startsWith("[")) {
-      decoded = tmp as List;
-    }
-    root = create(decoded);
+    print(root);
+    
+    widget.content.addListener(() => setState(() {
+      dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
+
+      if (widget.content.value == "") return;
+    
+      if (tmp.toString().startsWith("{")) {
+        decoded = tmp as Map;
+      } else if (tmp.toString().startsWith("[")) {
+        decoded = tmp as List;
+      }
+      root = create(decoded);
+    }));
+
+    setState(() {
+      if (widget.content.value == "") return;
+
+      dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
+      if (tmp.toString().startsWith("{")) {
+        decoded = tmp as Map;
+      } else if (tmp.toString().startsWith("[")) {
+        decoded = tmp as List;
+      }
+      root = create(decoded);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView(
-        children: root
-      )
+      body: root.isNotEmpty 
+          ? ListView(
+            children: [
+              ...root,
+              GestureDetector(
+                onSecondaryTapDown: (details) {
+                  showContextMenu<String>(
+                    context, 
+                    contextMenu: ContextMenu<String>(
+                      entries: [
+                        MenuItem<String>(
+                          label: Text("Add map"),
+                          icon: Icon(Icons.add),
+                          value: "map",
+                          onSelected: (value) => setState(() {
+                            root.add(JsonMap(v: {}, k: decoded is Map ? "key" : null));
+                          }),
+                        ),
+                        MenuItem<String>(
+                          label: Text("Add list"),
+                          icon: Icon(Icons.add),
+                          value: "list",
+                          onSelected: (value) => setState(() {
+                            root.add(JsonList(v: [], k: decoded is Map ? "key" : null));
+                          }),
+                        ),
+                        MenuItem<String>(
+                          label: Text("Add value"),
+                          icon: Icon(Icons.add),
+                          value: "value",
+                          onSelected: (value) => setState(() {
+                            root.add(
+                              decoded is Map 
+                                  ? JsonKeyValue(k: "key", v: "value")
+                                  : JsonValue(v: "value")
+                            );
+                          }),
+                        ),
+                      ],
+                      position: details.globalPosition,
+                      padding: EdgeInsets.all(8.0)
+                    )
+                  );
+                },
+                child: Builder(
+                  builder: (context) => Container(
+                    width: double.infinity,
+                    height: 120,
+                    color: Coolors.getSurfaceColor(context),
+                  ),
+                ),
+              )
+            ],
+          )
+          : Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => setState(() {
+                    decoded = {"key": "value"};
+                    root = create(decoded);
+                  }), 
+                  label: const Text("Base map"),
+                  icon: const Icon(Icons.map),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => setState(() {
+                    decoded = ["value"];
+                    root = create(decoded);
+                  }), 
+                  label: const Text("Base list"),
+                  icon: const Icon(Icons.list),
+                )
+              ],
+            ),
+          )
     );
   }
 
@@ -143,7 +225,7 @@ class EditorState extends State<Editor> {
     return r;
   }
 
-  String path() {
+  String? path() {
     return widget.path;
   }
 

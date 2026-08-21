@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:json_visual_editor/pages/editor.dart';
+import 'package:json_visual_editor/modules/color.dart';
 
 class TabBarEditor extends StatefulWidget {
   const TabBarEditor({super.key});
@@ -48,7 +49,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
             toolbarHeight: 0,
           ),
       body: editors.isEmpty 
-          ? Center(child: Text("Open a JSON file")) 
+          ? Container(color: Coolors.getSurfaceColor(context), child: Center(child: Text("Open a JSON file"))) 
           : IndexedStack(
             index: _tabController.index,
             children: editors,
@@ -56,7 +57,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     );
   }
 
-  void addTab(String content, String name, String path) {
+  void addTab(String content, String name, String? path) {
     setState(() {
       var k = GlobalKey<EditorState>();
       editorKeys.add(k);
@@ -81,7 +82,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     return editorKeys[_tabController.index].currentState!.save();
   }
 
-  String path() {
+  String? path() {
     return editorKeys[_tabController.index].currentState!.path();
   }
 }
