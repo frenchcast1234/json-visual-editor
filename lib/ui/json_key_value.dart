@@ -39,15 +39,8 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
   final TextEditingController _controller = TextEditingController();
   final TextEditingController _controller2 = TextEditingController();
 
-  late Widget content;
+  late Widget content = Text("${widget.k} : ${widget.v}");
   CurrentState currentState = CurrentState.title;
-
-  @override
-  void initState() {
-    super.initState();
-
-    content = Text("${widget.k} : ${widget.v}");
-  }
 
   @override
   Widget build(BuildContext context) {

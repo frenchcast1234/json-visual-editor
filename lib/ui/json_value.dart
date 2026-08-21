@@ -36,15 +36,8 @@ class _JsonValueState extends State<JsonValue> {
   };
   final TextEditingController _controller = TextEditingController();
 
-  late Widget content;
+  late Widget content = Text("${widget.v}");
   CurrentState currentState = CurrentState.title;
-
-  @override
-  void initState() {
-    super.initState();
-
-    content = Text("${widget.v}");
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +53,7 @@ class _JsonValueState extends State<JsonValue> {
                   label: Text("Delete element"),
                   icon: Icon(Icons.delete),
                   value: "delete",
-                  onSelected: (_) => widget.onDelete?.call(widget)
+                  onSelected: (_) => widget.onDelete?.call(widget),
                 ),
               ],
               position: details.globalPosition,

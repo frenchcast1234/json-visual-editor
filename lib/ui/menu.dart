@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:json_visual_editor/ui/tab_bar.dart';
 import 'package:menu_bar/menu_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:json_visual_editor/modules/color.dart';
 
 class Menu extends StatefulWidget {
-  const Menu({super.key});
+  final VoidCallback? onToggleTheme;
+
+  const Menu({super.key, this.onToggleTheme});
 
   @override
   State<Menu> createState() => _MenuState();
@@ -88,6 +91,18 @@ class _MenuState extends State<Menu>  {
                   file.writeAsString(json.encode(_tabBarKey.currentState?.save()));
                 }
               )
+            ],
+          ),
+        ),
+        BarButton(
+          text: const Text("View"),
+          submenu: SubMenu(
+            menuItems: [
+              MenuButton(
+                text: const Text("Toggle theme"),
+                icon: const Icon(Icons.brightness_6),
+                onTap: () => widget.onToggleTheme?.call(),
+              ),
             ],
           ),
         ),
