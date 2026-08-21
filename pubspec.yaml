@@ -12,6 +12,7 @@ dependencies:
   menu_bar: ^0.5.3
   file_picker: ^11.0.3
   flutter_context_menu: ^0.4.2
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
