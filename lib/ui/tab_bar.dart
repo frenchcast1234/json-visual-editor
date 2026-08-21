@@ -9,15 +9,20 @@ class TabBarEditor extends StatefulWidget {
 }
 
 class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixin {
-  late TabController _tabController = TabController(
-    length: editors.length,
-    initialIndex: 0, 
-    vsync: this
-  ); 
+  late TabController _tabController = _makeController(0);
 
   final List<GlobalKey<EditorState>> editorKeys = [];
   final List<Editor> editors = [];
-  final List<Text> names = [];
+  final List<Tab> names = [];
+
+  TabController _makeController(int index) {
+    // Duree par defaut : c'est elle qui anime le trait sous les onglets.
+    return TabController(length: editors.length, initialIndex: index, vsync: this)
+      ..addListener(_onIndexChanged);
+  }
+
+  // index change des le debut de l'animation : le contenu bascule d'un coup.
+  void _onIndexChanged() => setState(() {});
 
   @override
   void dispose() {
@@ -34,14 +39,18 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
             title: null,
             bottom: TabBar(
               controller: _tabController,
-              tabs: names.isEmpty ? <Widget>[] : names,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              tabs: names,
             ),
             toolbarHeight: 0,
           ),
       body: editors.isEmpty 
           ? Center(child: Text("Open a JSON file")) 
-          : TabBarView(
-            controller: _tabController,
+          : IndexedStack(
+            index: _tabController.index,
             children: editors,
           ),
     );
@@ -52,7 +61,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
       var k = GlobalKey<EditorState>();
       editorKeys.add(k);
       editors.add(Editor(key: k, content: ValueNotifier<String?>(content), path: path));
-      names.add(Text(name));
+      names.add(Tab(text: name));
 
       if (editors.length != _tabController.length) {
         final oldIndex = _tabController.index;
@@ -61,12 +70,9 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
             ? editors.length - 1
             : oldIndex;
         
+        _tabController.removeListener(_onIndexChanged);
         _tabController.dispose();
-        _tabController = TabController(
-          length: editors.length,
-          initialIndex: newIndex, 
-          vsync: this
-        );
+        _tabController = _makeController(newIndex);
       }
     });
   }
