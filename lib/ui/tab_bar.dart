@@ -15,6 +15,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
   final List<GlobalKey<EditorState>> editorKeys = [];
   final List<Editor> editors = [];
   final List<Tab> names = [];
+  final _fileName = RegExp(r'[^/\\]+$');
 
   TabController _makeController(int index) {
     // Duree par defaut : c'est elle qui anime le trait sous les onglets.
@@ -61,8 +62,8 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     setState(() {
       var k = GlobalKey<EditorState>();
       editorKeys.add(k);
-      editors.add(Editor(key: k, content: ValueNotifier<String?>(content), path: path));
-      names.add(Tab(text: name));
+      editors.add(Editor(key: k, content: ValueNotifier<String?>(content), path: path, unsave: () => refresh(k)));
+      names.add(Tab(text: path == null || path == "" ? "$name*" : name));
 
       if (editors.length != _tabController.length) {
         final oldIndex = _tabController.index;
@@ -86,12 +87,22 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     return editorKeys[_tabController.index].currentState!.path();
   }
 
-  /// Rattache l'onglet courant a [path] et met son titre a jour.
-  void rename(String name, String path) {
-    setState(() {
-      final i = _tabController.index;
-      editorKeys[i].currentState!.setPath(path);
-      names[i] = Tab(text: name);
-    });
+  void refresh(GlobalKey<EditorState> key) {
+    final i = editorKeys.indexOf(key);
+    if (i == -1) return;
+
+    final editor = key.currentState!;
+    final path = editor.path();
+    final name = path == null ? "Unsaved" : (_fileName.firstMatch(path)?.group(0) ?? path);
+
+    setState(() => names[i] = Tab(text: editor.saved ? name : "$name*"));
+  }
+
+  void markSaved(String path) {
+    final key = editorKeys[_tabController.index];
+    key.currentState!
+      ..setPath(path)
+      ..setSaved();
+    refresh(key);
   }
 }

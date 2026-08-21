@@ -95,11 +95,9 @@ class _MenuState extends State<Menu>  {
                   }
 
                   await File(path).writeAsString(json.encode(tabBar.save()));
+                  tabBar.markSaved(path);
 
-                  if (isNew) {
-                    tabBar.rename(nameOf(path), path);
-                    await _pushRecentFile(path);
-                  }
+                  if (isNew) await _pushRecentFile(path);
                 },
               ),
               MenuButton(
@@ -117,7 +115,7 @@ class _MenuState extends State<Menu>  {
                   if (outputFile == null) return;
 
                   await File(outputFile).writeAsString(json.encode(tabBar.save()));
-                  tabBar.rename(nameOf(outputFile), outputFile);
+                  tabBar.markSaved(outputFile);
                   await _pushRecentFile(outputFile);
                 }
               ),

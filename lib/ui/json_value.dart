@@ -10,10 +10,12 @@ class JsonValue extends StatefulWidget {
   dynamic v; // value
 
   final void Function(Widget child)? onDelete;
+  final VoidCallback unsavedRef;
 
   JsonValue({
     super.key,
     required this.v,
+    required this.unsavedRef,
     this.onDelete
   });
 
@@ -85,6 +87,7 @@ class _JsonValueState extends State<JsonValue> {
             
             currentState = CurrentState.title;
             content = Text("${widget.v}");
+            widget.unsavedRef();
           }),
         );
       });

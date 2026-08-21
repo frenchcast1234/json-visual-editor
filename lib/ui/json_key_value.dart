@@ -11,11 +11,13 @@ class JsonKeyValue extends StatefulWidget {
   dynamic v;
 
   final void Function(Widget child)? onDelete;
+  final VoidCallback unsavedRef;
 
   JsonKeyValue({
     super.key,
     required this.k,
     required this.v,
+    required this.unsavedRef,
     this.onDelete
   });
 
@@ -68,6 +70,7 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
                             widget.k = value.trim().isEmpty ? oldk : value;
                             currentState = CurrentState.title;
                             content = Text("${widget.k} : ${widget.v}");
+                            widget.unsavedRef();
                           }),
                         );
                       });
@@ -114,6 +117,7 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
             else { widget.v = value; }
             currentState = CurrentState.title;
             content = Text("${widget.k} : ${widget.v}");
+            widget.unsavedRef();
           }),
         );
       });

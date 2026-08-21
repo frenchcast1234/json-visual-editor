@@ -11,21 +11,23 @@ import 'package:json_visual_editor/modules/color.dart';
 class Editor extends StatefulWidget {
   final ValueNotifier<String?> content;
   final String? path;
+  final VoidCallback unsave;
 
   Editor({
     super.key,
     required this.content,
     required this.path,
+    required this.unsave
   });
 
   @override
   State<Editor> createState() => EditorState();
+
 }
 
 class EditorState extends State<Editor> {
   Editor get widget => super.widget;
 
-  /// Chemin courant du fichier : null tant qu'il n'a jamais ete enregistre.
   late String? _path = widget.path;
 
   String template = r"""
@@ -62,6 +64,7 @@ class EditorState extends State<Editor> {
 
   var decoded;
   List<Widget> root = [];
+  late bool saved = widget.path == null || widget.path == "";
   
   @override
   void initState() {
@@ -113,7 +116,7 @@ class EditorState extends State<Editor> {
                           icon: Icon(Icons.add),
                           value: "map",
                           onSelected: (value) => setState(() {
-                            root.add(JsonMap(v: {}, k: decoded is Map ? "key" : null));
+                            root.add(JsonMap(v: {}, k: decoded is Map ? "key" : null, unsavedRef: setUnsaved));
                           }),
                         ),
                         MenuItem<String>(
@@ -121,7 +124,7 @@ class EditorState extends State<Editor> {
                           icon: Icon(Icons.add),
                           value: "list",
                           onSelected: (value) => setState(() {
-                            root.add(JsonList(v: [], k: decoded is Map ? "key" : null));
+                            root.add(JsonList(v: [], k: decoded is Map ? "key" : null, unsavedRef: setUnsaved));
                           }),
                         ),
                         MenuItem<String>(
@@ -131,8 +134,8 @@ class EditorState extends State<Editor> {
                           onSelected: (value) => setState(() {
                             root.add(
                               decoded is Map 
-                                  ? JsonKeyValue(k: "key", v: "value")
-                                  : JsonValue(v: "value")
+                                  ? JsonKeyValue(k: "key", unsavedRef: setUnsaved, v: "value")
+                                  : JsonValue(v: "value", unsavedRef: setUnsaved)
                             );
                           }),
                         ),
@@ -183,15 +186,15 @@ class EditorState extends State<Editor> {
 
     if (m is Map) { // Root
       m.forEach((key, value) {
-        if (value is Map) { l.add(JsonMap(v: value, k: key, onDelete: removeChild)); }
-        if (value is List) { l.add(JsonList(v: value, k: key, onDelete: removeChild)); }
-        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, onDelete: removeChild)); }
+        if (value is Map) { l.add(JsonMap(v: value, k: key, unsavedRef: setUnsaved, onDelete: removeChild)); }
+        if (value is List) { l.add(JsonList(v: value, k: key, unsavedRef: setUnsaved, onDelete: removeChild)); }
+        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, unsavedRef: setUnsaved, onDelete: removeChild)); }
       });
     } else if (m is List) { // Root
       for (dynamic x in m) {
-        if (x is List) { l.add(JsonList(v: x, k: null, onDelete: removeChild)); }
-        if (x is Map) { l.add(JsonMap(v: x, k: null, onDelete: removeChild)); }
-        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, onDelete: removeChild)); }
+        if (x is List) { l.add(JsonList(v: x, k: null, unsavedRef: setUnsaved, onDelete: removeChild)); }
+        if (x is Map) { l.add(JsonMap(v: x, k: null, unsavedRef: setUnsaved, onDelete: removeChild)); }
+        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, unsavedRef: setUnsaved, onDelete: removeChild)); }
       }
     }
 
@@ -237,4 +240,11 @@ class EditorState extends State<Editor> {
   }
 
   void removeChild(Widget child) => setState(() => root = List.of(root)..remove(child));
+
+  void setUnsaved() {
+    saved = false;
+    widget.unsave();
+  }
+
+  void setSaved() => saved = true;
 }

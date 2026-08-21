@@ -7,6 +7,7 @@ class JsonMap extends StatefulWidget {
   final Map v;
   final String? k;
   final GlobalKey<JsonMapState> stateKey;
+  final VoidCallback unsavedRef;
 
   final void Function(Widget child)? onDelete;
 
@@ -14,12 +15,13 @@ class JsonMap extends StatefulWidget {
     required this.stateKey,
     required this.v,
     required this.k,
-    this.onDelete
+    required this.unsavedRef,
+    this.onDelete,
   }) : super(key: stateKey);
 
-  factory JsonMap({required Map v, required String? k, void Function(Widget)? onDelete}) {
+  factory JsonMap({required Map v, required String? k, required void Function() unsavedRef, void Function(Widget)? onDelete}) {
     final stateKey = GlobalKey<JsonMapState>();
-    return JsonMap._(stateKey: stateKey, v: v, k: k, onDelete: onDelete);
+    return JsonMap._(stateKey: stateKey, v: v, k: k, unsavedRef: unsavedRef, onDelete: onDelete);
   }
 
   GlobalKey<JsonMapState> getKey() => stateKey;
@@ -48,7 +50,7 @@ class JsonMapState extends State<JsonMap> {
                   icon: Icon(Icons.add),
                   value: "value",
                   onSelected: (value) => setState(() {
-                    content.add(JsonKeyValue(key: UniqueKey(), v: "new value", k: "new key", onDelete: removeChild));
+                    content.add(JsonKeyValue(key: UniqueKey(), v: "new value", k: "new key", unsavedRef: widget.unsavedRef, onDelete: removeChild));
                   })
                 ),
                 MenuItem<String>(
@@ -56,7 +58,7 @@ class JsonMapState extends State<JsonMap> {
                   icon: Icon(Icons.add),
                   value: "list",
                   onSelected: (value) => setState(() {
-                    content.add(JsonList(v: [], k: "key", onDelete: removeChild));
+                    content.add(JsonList(v: [], k: "key", unsavedRef: widget.unsavedRef, onDelete: removeChild));
                   }),
                 ),
                 MenuItem<String>(
@@ -64,7 +66,7 @@ class JsonMapState extends State<JsonMap> {
                   icon: Icon(Icons.add),
                   value: "map",
                   onSelected: (value) => setState(() {
-                    content.add(JsonMap(v: {}, k: "key", onDelete: removeChild));
+                    content.add(JsonMap(v: {}, k: "key", unsavedRef: widget.unsavedRef, onDelete: removeChild));
                   }),
                 ),
                 MenuItem<String>(
@@ -122,9 +124,9 @@ class JsonMapState extends State<JsonMap> {
     List<Widget> l = [];
 
     m.forEach((key, value) {
-      if (value is Map) { l.add(JsonMap(k: key, v: value, onDelete: removeChild)); }
-      else if (value is List) { l.add(JsonList(v: value, k: key, onDelete: removeChild)); }
-      else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, onDelete: removeChild)); }
+      if (value is Map) { l.add(JsonMap(k: key, v: value, unsavedRef: widget.unsavedRef, onDelete: removeChild)); }
+      else if (value is List) { l.add(JsonList(v: value, k: key, unsavedRef: widget.unsavedRef, onDelete: removeChild)); }
+      else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, unsavedRef: widget.unsavedRef, onDelete: removeChild)); }
     });
 
     return l;
