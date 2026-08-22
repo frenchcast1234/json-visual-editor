@@ -63,7 +63,7 @@ class EditorState extends State<Editor> {
 """;
 
   var decoded;
-  List<Widget> root = [];
+  List root = [];
   late bool saved = widget.path != null && widget.path != "";
   
   @override
@@ -104,7 +104,7 @@ class EditorState extends State<Editor> {
       body: root.isNotEmpty 
           ? ListView(
             children: [
-              ...root,
+              ...root as List<Widget>,
               GestureDetector(
                 onSecondaryTapDown: (details) {
                   showContextMenu<String>(
@@ -116,7 +116,7 @@ class EditorState extends State<Editor> {
                           icon: Icon(Icons.add),
                           value: "map",
                           onSelected: (value) => setState(() {
-                            root.add(JsonMap(v: {}, k: decoded is Map ? "key" : null, unsavedRef: setUnsaved));
+                            root.add(JsonMap(v: {}, k: decoded is Map ? "key" : null, index: root.length, insertRef: insert, unsavedRef: setUnsaved));
                           }),
                         ),
                         MenuItem<String>(
@@ -124,7 +124,7 @@ class EditorState extends State<Editor> {
                           icon: Icon(Icons.add),
                           value: "list",
                           onSelected: (value) => setState(() {
-                            root.add(JsonList(v: [], k: decoded is Map ? "key" : null, unsavedRef: setUnsaved));
+                            root.add(JsonList(v: [], k: decoded is Map ? "key" : null, index: root.length, insertRef: insert, unsavedRef: setUnsaved));
                           }),
                         ),
                         MenuItem<String>(
@@ -134,8 +134,8 @@ class EditorState extends State<Editor> {
                           onSelected: (value) => setState(() {
                             root.add(
                               decoded is Map 
-                                  ? JsonKeyValue(k: "key", unsavedRef: setUnsaved, v: "value")
-                                  : JsonValue(v: "value", unsavedRef: setUnsaved)
+                                  ? JsonKeyValue(k: "key", unsavedRef: setUnsaved, index: root.length, insertRef: insert, v: "value")
+                                  : JsonValue(v: "value", unsavedRef: setUnsaved, index: root.length, insertRef: insert)
                             );
                           }),
                         ),
@@ -183,18 +183,21 @@ class EditorState extends State<Editor> {
 
   List<Widget> create(var m) {
     List<Widget> l = [];
+    int i = 0;
 
     if (m is Map) { // Root
       m.forEach((key, value) {
-        if (value is Map) { l.add(JsonMap(v: value, k: key, unsavedRef: setUnsaved, onDelete: removeChild)); }
-        if (value is List) { l.add(JsonList(v: value, k: key, unsavedRef: setUnsaved, onDelete: removeChild)); }
-        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, unsavedRef: setUnsaved, onDelete: removeChild)); }
+        if (value is Map) { l.add(JsonMap(v: value, k: key, unsavedRef: setUnsaved, index: i, insertRef: insert, onDelete: removeChild)); }
+        if (value is List) { l.add(JsonList(v: value, k: key, unsavedRef: setUnsaved, index: i, insertRef: insert, onDelete: removeChild)); }
+        else if (value is int || value is double || value is String || value is bool || value == null) { l.add(JsonKeyValue(key: UniqueKey(), k: key, v: value, unsavedRef: setUnsaved, index: i, insertRef: insert, onDelete: removeChild)); }
+        i++;
       });
     } else if (m is List) { // Root
       for (dynamic x in m) {
-        if (x is List) { l.add(JsonList(v: x, k: null, unsavedRef: setUnsaved, onDelete: removeChild)); }
-        if (x is Map) { l.add(JsonMap(v: x, k: null, unsavedRef: setUnsaved, onDelete: removeChild)); }
-        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, unsavedRef: setUnsaved, onDelete: removeChild)); }
+        if (x is List) { l.add(JsonList(v: x, k: null, unsavedRef: setUnsaved, index: i, insertRef: insert, onDelete: removeChild)); }
+        if (x is Map) { l.add(JsonMap(v: x, k: null, unsavedRef: setUnsaved, index: i, insertRef: insert, onDelete: removeChild)); }
+        else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, unsavedRef: setUnsaved, index: i, insertRef: insert, onDelete: removeChild)); }
+        i++;
       }
     }
 
@@ -247,4 +250,11 @@ class EditorState extends State<Editor> {
   }
 
   void setSaved() => saved = true;
+
+  void insert(int insertIndex, dynamic element) => setState(() {
+    root.insert(insertIndex, element);
+    for (int x = root.length - 1; x>insertIndex; x--) {
+      root[x].index++;
+    }
+  });
 }

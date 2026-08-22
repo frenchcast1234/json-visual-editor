@@ -14,20 +14,24 @@ class JsonList extends StatefulWidget {
   final String? k;
   final GlobalKey<JsonListState> stateKey;
   final VoidCallback unsavedRef;
+  int index;
 
   final void Function(Widget child)? onDelete;
+  final void Function(int insertIndex, dynamic element) insertRef;
 
-  const JsonList._({
+  JsonList._({
     required this.stateKey,
     required this.v,
     required this.k,
     required this.unsavedRef,
+    required this.index,
+    required this.insertRef,
     this.onDelete
   }) : super(key: stateKey);
 
-  factory JsonList({required List v, required String? k, required void Function() unsavedRef, void Function(Widget)? onDelete}) {
+  factory JsonList({required List v, required String? k, required void Function() unsavedRef, required int index, required void Function(int, dynamic) insertRef, void Function(Widget)? onDelete}) {
     final stateKey = GlobalKey<JsonListState>();
-    return JsonList._(stateKey: stateKey, v: v, k: k, unsavedRef: unsavedRef, onDelete: onDelete);
+    return JsonList._(stateKey: stateKey, v: v, k: k, unsavedRef: unsavedRef, index: index, insertRef: insertRef, onDelete: onDelete);
   }
 
   GlobalKey<JsonListState> getKey() => stateKey;
@@ -38,7 +42,7 @@ class JsonList extends StatefulWidget {
 
 class JsonListState extends State<JsonList> {
   JsonList get widget => super.widget;
-  late List<Widget> content = create(widget.v);
+  late List content = create(widget.v);
   late String k = widget.k ?? "key";
   CurrentState currentState = CurrentState.title;
   late final TextEditingController _kController = TextEditingController(text: k);
@@ -58,7 +62,7 @@ class JsonListState extends State<JsonList> {
                   icon: Icon(Icons.add),
                   value: "value",
                   onSelected: (value) => setState(() {
-                    content.add(JsonValue(key: UniqueKey(), v: "new value", unsavedRef: widget.unsavedRef, onDelete: removeChild));
+                    content.add(JsonValue(key: UniqueKey(), v: "new value", unsavedRef: widget.unsavedRef, index: content.length, insertRef: widget.insertRef, onDelete: removeChild));
                   })
                 ),
                 MenuItem<String>(
@@ -66,7 +70,7 @@ class JsonListState extends State<JsonList> {
                   icon: Icon(Icons.add),
                   value: "list",
                   onSelected: (value) => setState(() {
-                    content.add(JsonList(v: [], k: null, unsavedRef: widget.unsavedRef, onDelete: removeChild));
+                    content.add(JsonList(v: [], k: null, unsavedRef: widget.unsavedRef, index: content.length, insertRef: widget.insertRef, onDelete: removeChild));
                   }),
                 ),
                 MenuItem<String>(
@@ -74,7 +78,7 @@ class JsonListState extends State<JsonList> {
                   icon: Icon(Icons.add),
                   value: "map",
                   onSelected: (value) => setState(() {
-                    content.add(JsonMap(v: {}, k: null, unsavedRef: widget.unsavedRef, onDelete: removeChild));
+                    content.add(JsonMap(v: {}, k: null, unsavedRef: widget.unsavedRef, index: content.length, insertRef: widget.insertRef, onDelete: removeChild));
                   }),
                 ),
                 MenuItem<String>(
@@ -89,6 +93,56 @@ class JsonListState extends State<JsonList> {
                   label: Text("Delete element"),
                   icon: Icon(Icons.delete),
                   value: "delete",
+                  onSelected: (_) => widget.onDelete?.call(widget)
+                ),
+                MenuItem<String>.submenu(
+                  label: Text("Insert after"),
+                  icon: Icon(Icons.delete),
+                  items: [
+                    MenuItem<String>(
+                      label: const Text("Value"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_after_value",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index+1, JsonValue(v: "value", unsavedRef: widget.unsavedRef, index: widget.index+1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("List"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_after_list",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index+1, JsonList(k: null, v: ["value"], unsavedRef: widget.unsavedRef, index: widget.index+1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("Map"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_after_map",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index+1, JsonMap(k: null, v: {"key": "value"}, unsavedRef: widget.unsavedRef, index: widget.index+1, insertRef: widget.insertRef))),
+                    ),
+                  ],
+                  onSelected: (_) => widget.onDelete?.call(widget)
+                ),
+                MenuItem<String>.submenu(
+                  label: Text("Insert before"),
+                  icon: Icon(Icons.delete),
+                  items: [
+                    MenuItem<String>(
+                      label: const Text("Value"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_before_value",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index, JsonValue(v: "value", unsavedRef: widget.unsavedRef, index: widget.index-1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("List"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_before_list",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index, JsonList(k: null, v: ["value"], unsavedRef: widget.unsavedRef, index: widget.index-1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("Map"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_before_map",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index, JsonMap(k: null, v: {"key": "value"}, unsavedRef: widget.unsavedRef, index: widget.index-1, insertRef: widget.insertRef))),
+                    ),
+                  ],
                   onSelected: (_) => widget.onDelete?.call(widget)
                 ),
               ],
@@ -130,8 +184,8 @@ class JsonListState extends State<JsonList> {
             ],
             Column(
               children: content.isEmpty 
-                  ? [ SizedBox(height: 16) ]
-                  : content
+                  ? [ SizedBox(height: 48.0) ]
+                  : content as List<Widget>
             )
           ]
         ),
@@ -141,11 +195,13 @@ class JsonListState extends State<JsonList> {
 
   List<Widget> create(List m) {
     List<Widget> l = [];
+    var i = 0;
 
     for (dynamic x in m) {
-      if (x is Map) { l.add(JsonMap(v: x, k: null, unsavedRef: widget.unsavedRef, onDelete: removeChild)); }
-      else if (x is List) { l.add(JsonList(v: x, k: null, unsavedRef: widget.unsavedRef, onDelete: removeChild)); }
-      else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, unsavedRef: widget.unsavedRef, onDelete: removeChild,)); }
+      if (x is Map) { l.add(JsonMap(v: x, k: null, unsavedRef: widget.unsavedRef, index: i, insertRef: insert, onDelete: removeChild)); }
+      else if (x is List) { l.add(JsonList(v: x, k: null, unsavedRef: widget.unsavedRef, index: i, insertRef: insert, onDelete: removeChild)); }
+      else if (x is int || x is double || x is String || x is bool || x == null) { l.add(JsonValue(key: UniqueKey(), v: x, unsavedRef: widget.unsavedRef, index: i, insertRef: insert, onDelete: removeChild,)); }
+      i++;
     }
 
     return l;
@@ -170,4 +226,10 @@ class JsonListState extends State<JsonList> {
   }
 
   void removeChild(Widget child) => setState(() => content.remove(child));
+  void insert(int insertIndex, dynamic element) => setState(() {
+    content.insert(insertIndex, element);
+    for (int x = content.length - 1; x>insertIndex; x--) {
+      content[x].index++;
+    }
+  });
 }

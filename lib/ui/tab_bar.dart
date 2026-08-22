@@ -157,18 +157,15 @@ class TabBarEditorState extends State<TabBarEditor>
           backgroundColor: Coolors.getSurfaceColor(context),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(CloseChoice.cancel),
+              onPressed: () => Navigator.of(dialogContext).pop(CloseChoice.cancel),
               child: const Text("Cancel"),
             ),
             TextButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(CloseChoice.discard),
+              onPressed: () => Navigator.of(dialogContext).pop(CloseChoice.discard),
               child: const Text("Don't save"),
             ),
             TextButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(CloseChoice.save),
+              onPressed: () => Navigator.of(dialogContext).pop(CloseChoice.save),
               child: const Text("Save"),
             ),
           ],

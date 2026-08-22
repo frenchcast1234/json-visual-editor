@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:json_visual_editor/ui/json_map.dart';
+import 'package:json_visual_editor/ui/json_list.dart';
 
 enum CurrentState {
   title,
@@ -12,12 +14,16 @@ class JsonKeyValue extends StatefulWidget {
 
   final void Function(Widget child)? onDelete;
   final VoidCallback unsavedRef;
+  int index;
+  final void Function(int insertIndex, dynamic element) insertRef;
 
   JsonKeyValue({
     super.key,
     required this.k,
     required this.v,
     required this.unsavedRef,
+    required this.index,
+    required this.insertRef,
     this.onDelete
   });
 
@@ -86,6 +92,56 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
                   label: Text("Delete element"),
                   icon: Icon(Icons.delete),
                   value: "delete",
+                  onSelected: (_) => widget.onDelete?.call(widget)
+                ),
+                MenuItem<String>.submenu(
+                  label: Text("Insert after"),
+                  icon: Icon(Icons.delete),
+                  items: [
+                    MenuItem<String>(
+                      label: const Text("Value"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_after_value",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index+1, JsonKeyValue(k: "key", v: "value", unsavedRef: widget.unsavedRef, index: widget.index+1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("List"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_after_list",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index+1, JsonList(k: "key", v: ["value"], unsavedRef: widget.unsavedRef, index: widget.index+1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("Map"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_after_map",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index+1, JsonMap(k: "key", v: {"key": "value"}, unsavedRef: widget.unsavedRef, index: widget.index+1, insertRef: widget.insertRef))),
+                    ),
+                  ],
+                  onSelected: (_) => widget.onDelete?.call(widget)
+                ),
+                MenuItem<String>.submenu(
+                  label: Text("Insert before"),
+                  icon: Icon(Icons.delete),
+                  items: [
+                    MenuItem<String>(
+                      label: const Text("Value"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_before_value",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index, JsonKeyValue(k: "key", v: "value", unsavedRef: widget.unsavedRef, index: widget.index-1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("List"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_before_list",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index, JsonList(k: "key", v: ["value"], unsavedRef: widget.unsavedRef, index: widget.index-1, insertRef: widget.insertRef))),
+                    ),
+                    MenuItem<String>(
+                      label: const Text("Map"),
+                      icon: const Icon(Icons.add),
+                      value: "insert_before_map",
+                      onSelected: (value) => setState(() => widget.insertRef(widget.index, JsonMap(k: "key", v: {"key": "value"}, unsavedRef: widget.unsavedRef, index: widget.index-1, insertRef: widget.insertRef))),
+                    ),
+                  ],
                   onSelected: (_) => widget.onDelete?.call(widget)
                 ),
               ],
