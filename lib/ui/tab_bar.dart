@@ -151,8 +151,10 @@ class TabBarEditorState extends State<TabBarEditor>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Warning"),
-          content: const Text("Save the file ?"),
+          title: Text("Warning", style: TextStyle(color: Coolors.getDarkColor(context))),
+          content: Text("Save the file ?", style: TextStyle(color: Coolors.getDarkColor(context))),
+          icon: const Icon(Icons.warning),
+          backgroundColor: Coolors.getSurfaceColor(context),
           actions: [
             TextButton(
               onPressed: () =>
