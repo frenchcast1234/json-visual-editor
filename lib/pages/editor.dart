@@ -64,7 +64,7 @@ class EditorState extends State<Editor> {
 
   var decoded;
   List<Widget> root = [];
-  late bool saved = widget.path == null || widget.path == "";
+  late bool saved = widget.path != null && widget.path != "";
   
   @override
   void initState() {

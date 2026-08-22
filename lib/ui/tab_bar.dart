@@ -63,19 +63,59 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
       var k = GlobalKey<EditorState>();
       editorKeys.add(k);
       editors.add(Editor(key: k, content: ValueNotifier<String?>(content), path: path, unsave: () => refresh(k)));
-      names.add(Tab(text: path == null || path == "" ? "$name*" : name));
+      names.add(_tab(k, path == null || path == "" ? "$name*" : name));
 
       if (editors.length != _tabController.length) {
         final oldIndex = _tabController.index;
-        
+
         final newIndex = oldIndex >= editors.length
             ? editors.length - 1
             : oldIndex;
-        
+
         _tabController.removeListener(_onIndexChanged);
         _tabController.dispose();
         _tabController = _makeController(newIndex);
       }
+    });
+  }
+
+  /// Onglet : le libelle, puis le bouton de fermeture a sa droite.
+  Tab _tab(GlobalKey<EditorState> key, String label) {
+    return Tab(
+      child: Row(
+        children: [
+          const SizedBox(width: 12.0),
+          Text(label),
+          IconButton(
+            onPressed: () => closeTab(key),
+            icon: const Icon(Icons.close),
+            iconSize: 24.0,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Ferme l'onglet porte par [key]. Un TabController ne pouvant pas changer de
+  /// longueur, il est recree a chaque fermeture, comme dans [addTab].
+  void closeTab(GlobalKey<EditorState> key) {
+    final i = editorKeys.indexOf(key);
+    if (i == -1) return;
+
+    setState(() {
+      var index = _tabController.index;
+
+      editorKeys.removeAt(i);
+      editors.removeAt(i);
+      names.removeAt(i);
+
+      if (i < index) index -= 1;                                  // les onglets a droite se decalent
+      if (index > editors.length - 1) index = editors.length - 1; // l'onglet ferme etait le dernier
+      if (index < 0) index = 0;                                   // plus aucun onglet
+
+      _tabController.removeListener(_onIndexChanged);
+      _tabController.dispose();
+      _tabController = _makeController(index);
     });
   }
 
@@ -95,7 +135,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     final path = editor.path();
     final name = path == null ? "Unsaved" : (_fileName.firstMatch(path)?.group(0) ?? path);
 
-    setState(() => names[i] = Tab(text: editor.saved ? name : "$name*"));
+    setState(() => names[i] = _tab(key, editor.saved ? name : "$name*"));
   }
 
   void markSaved(String path) {

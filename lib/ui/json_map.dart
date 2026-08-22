@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:json_visual_editor/ui/json_list.dart';
 import 'package:json_visual_editor/ui/json_key_value.dart';
+import 'package:json_visual_editor/modules/color.dart';
 
 class JsonMap extends StatefulWidget {
   final Map v;
@@ -87,7 +88,8 @@ class JsonMapState extends State<JsonMap> {
         decoration: BoxDecoration(
           border: Border(
             left: BorderSide(
-              width: 1.0
+              width: 1.0,
+              color: Coolors.getDarkColor(context)
             )
           )
         ),
