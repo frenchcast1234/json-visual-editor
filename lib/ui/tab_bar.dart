@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:json_visual_editor/pages/editor.dart';
 import 'package:json_visual_editor/modules/color.dart';
 
+enum CloseChoice { save, discard, cancel }
+
 class TabBarEditor extends StatefulWidget {
-  const TabBarEditor({super.key});
+  final Future<String?> Function(String? p, dynamic cont) saveRef;
+
+  const TabBarEditor({super.key, required this.saveRef});
 
   @override
   State<TabBarEditor> createState() => TabBarEditorState();
 }
 
-class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixin {
+class TabBarEditorState extends State<TabBarEditor>
+    with TickerProviderStateMixin {
   late TabController _tabController = _makeController(0);
 
   final List<GlobalKey<EditorState>> editorKeys = [];
@@ -17,13 +22,16 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
   final List<Tab> names = [];
   final _fileName = RegExp(r'[^/\\]+$');
 
+  bool get hasTabs => editors.isNotEmpty;
+
   TabController _makeController(int index) {
-    // Duree par defaut : c'est elle qui anime le trait sous les onglets.
-    return TabController(length: editors.length, initialIndex: index, vsync: this)
-      ..addListener(_onIndexChanged);
+    return TabController(
+      length: editors.length,
+      initialIndex: index,
+      vsync: this,
+    )..addListener(_onIndexChanged);
   }
 
-  // index change des le debut de l'animation : le contenu bascule d'un coup.
   void _onIndexChanged() => setState(() {});
 
   @override
@@ -38,23 +46,23 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
       appBar: editors.isEmpty
           ? null
           : AppBar(
-            title: null,
-            bottom: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              splashFactory: NoSplash.splashFactory,
-              overlayColor: WidgetStateProperty.all(Colors.transparent),
-              tabs: names,
+              title: null,
+              bottom: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                splashFactory: NoSplash.splashFactory,
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                tabs: names,
+              ),
+              toolbarHeight: 0,
             ),
-            toolbarHeight: 0,
-          ),
-      body: editors.isEmpty 
-          ? Container(color: Coolors.getSurfaceColor(context), child: Center(child: Text("Open a JSON file"))) 
-          : IndexedStack(
-            index: _tabController.index,
-            children: editors,
-          ),
+      body: editors.isEmpty
+          ? Container(
+              color: Coolors.getSurfaceColor(context),
+              child: Center(child: Text("Open a JSON file")),
+            )
+          : IndexedStack(index: _tabController.index, children: editors),
     );
   }
 
@@ -62,8 +70,15 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     setState(() {
       var k = GlobalKey<EditorState>();
       editorKeys.add(k);
-      editors.add(Editor(key: k, content: ValueNotifier<String?>(content), path: path, unsave: () => refresh(k)));
-      names.add(_tab(k, path == null || path == "" ? "$name*" : name));
+      editors.add(
+        Editor(
+          key: k,
+          content: ValueNotifier<String?>(content),
+          path: path,
+          unsave: () => refresh(k),
+        ),
+      );
+      names.add(tab(k, path == "" || path == null ? "$name*" : name));
 
       if (editors.length != _tabController.length) {
         final oldIndex = _tabController.index;
@@ -79,15 +94,14 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     });
   }
 
-  /// Onglet : le libelle, puis le bouton de fermeture a sa droite.
-  Tab _tab(GlobalKey<EditorState> key, String label) {
+  Tab tab(GlobalKey<EditorState> k, String text) {
     return Tab(
       child: Row(
         children: [
           const SizedBox(width: 12.0),
-          Text(label),
+          Text(text),
           IconButton(
-            onPressed: () => closeTab(key),
+            onPressed: () => closeTab(k),
             icon: const Icon(Icons.close),
             iconSize: 24.0,
           ),
@@ -96,10 +110,23 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     );
   }
 
-  /// Ferme l'onglet porte par [key]. Un TabController ne pouvant pas changer de
-  /// longueur, il est recree a chaque fermeture, comme dans [addTab].
-  void closeTab(GlobalKey<EditorState> key) {
-    final i = editorKeys.indexOf(key);
+  Future<void> closeTab(GlobalKey<EditorState> k) async {
+    final editor = k.currentState;
+
+    if (editor != null && !editor.saved) {
+      final choice = await _askSave();
+
+      if (choice == null || choice == CloseChoice.cancel) return;
+
+      if (choice == CloseChoice.save &&
+          await widget.saveRef(editor.path(), editor.save()) == null) {
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    final i = editorKeys.indexOf(k);
     if (i == -1) return;
 
     setState(() {
@@ -109,14 +136,43 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
       editors.removeAt(i);
       names.removeAt(i);
 
-      if (i < index) index -= 1;                                  // les onglets a droite se decalent
-      if (index > editors.length - 1) index = editors.length - 1; // l'onglet ferme etait le dernier
-      if (index < 0) index = 0;                                   // plus aucun onglet
+      if (i < index) index -= 1;
+      if (index > editors.length - 1) index = editors.length - 1;
+      if (index < 0) index = 0;
 
       _tabController.removeListener(_onIndexChanged);
       _tabController.dispose();
       _tabController = _makeController(index);
     });
+  }
+
+  Future<CloseChoice?> _askSave() {
+    return showDialog<CloseChoice>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Warning"),
+          content: const Text("Save the file ?"),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(CloseChoice.cancel),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(CloseChoice.discard),
+              child: const Text("Don't save"),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(CloseChoice.save),
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   dynamic save() {
@@ -133,9 +189,11 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
 
     final editor = key.currentState!;
     final path = editor.path();
-    final name = path == null ? "Unsaved" : (_fileName.firstMatch(path)?.group(0) ?? path);
+    final name = path == null
+        ? "Unsaved"
+        : (_fileName.firstMatch(path)?.group(0) ?? path);
 
-    setState(() => names[i] = _tab(key, editor.saved ? name : "$name*"));
+    setState(() => names[i] = tab(key, editor.saved ? name : "$name*"));
   }
 
   void markSaved(String path) {

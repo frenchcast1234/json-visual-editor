@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:json_visual_editor/ui/tab_bar.dart';
 import 'package:menu_bar/menu_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:json_visual_editor/modules/color.dart';
 
 class Menu extends StatefulWidget {
   final VoidCallback? onToggleTheme;
@@ -17,12 +16,14 @@ class Menu extends StatefulWidget {
   State<Menu> createState() => _MenuState();
 }
 
-class _MenuState extends State<Menu>  {
-  late final GlobalKey<TabBarEditorState> _tabBarKey = GlobalKey<TabBarEditorState>();
+class _MenuState extends State<Menu> {
+  late final GlobalKey<TabBarEditorState> _tabBarKey =
+      GlobalKey<TabBarEditorState>();
   SharedPreferences? prefs;
   final _fileName = RegExp(r'[^/\\]+$');
-  
-  @override void initState() {
+
+  @override
+  void initState() {
     super.initState();
     _loadPrefs();
   }
@@ -33,12 +34,14 @@ class _MenuState extends State<Menu>  {
     setState(() => prefs = p);
   }
 
-  /// Ajoute [path] en tete des fichiers recents, sans doublon.
   Future<void> _pushRecentFile(String path) async {
     final p = prefs;
     if (p == null) return;
 
-    final recent = [path, ...?p.getStringList("recent_files")?.where((e) => e != path)];
+    final recent = [
+      path,
+      ...?p.getStringList("recent_files")?.where((e) => e != path),
+    ];
     await p.setStringList("recent_files", recent);
     if (!mounted) return;
     setState(() {});
@@ -74,30 +77,21 @@ class _MenuState extends State<Menu>  {
               MenuButton(
                 text: const Text("Open recent file"),
                 icon: const Icon(Icons.history),
-                submenu: SubMenu(menuItems: getRecentFiles().isEmpty ? [ MenuButton(text: Text("No recent file")) ] : getRecentFiles())
+                submenu: SubMenu(
+                  menuItems: getRecentFiles().isEmpty
+                      ? [MenuButton(text: Text("No recent file"))]
+                      : getRecentFiles(),
+                ),
               ),
               MenuButton(
                 text: const Text("Save file"),
                 icon: const Icon(Icons.save),
                 onTap: () async {
                   final tabBar = _tabBarKey.currentState;
-                  if (tabBar == null) return;
+                  if (tabBar == null || !tabBar.hasTabs) return;
 
-                  String? path = tabBar.path();
-                  final isNew = path == null;
-
-                  if (isNew) {
-                    path = await FilePicker.saveFile(
-                      dialogTitle: "Please select an output file",
-                      fileName: "output.json"
-                    );
-                    if (path == null) return;
-                  }
-
-                  await File(path).writeAsString(json.encode(tabBar.save()));
-                  tabBar.markSaved(path);
-
-                  if (isNew) await _pushRecentFile(path);
+                  final path = await saveTo(tabBar.path(), tabBar.save());
+                  if (path != null) tabBar.markSaved(path);
                 },
               ),
               MenuButton(
@@ -105,19 +99,11 @@ class _MenuState extends State<Menu>  {
                 icon: const Icon(Icons.save_as),
                 onTap: () async {
                   final tabBar = _tabBarKey.currentState;
-                  if (tabBar == null) return;
+                  if (tabBar == null || !tabBar.hasTabs) return;
 
-                  String? outputFile = await FilePicker.saveFile(
-                    dialogTitle: "Please select an output file",
-                    fileName: "output.json"
-                  );
-
-                  if (outputFile == null) return;
-
-                  await File(outputFile).writeAsString(json.encode(tabBar.save()));
-                  tabBar.markSaved(outputFile);
-                  await _pushRecentFile(outputFile);
-                }
+                  final path = await saveTo(null, tabBar.save());
+                  if (path != null) tabBar.markSaved(path);
+                },
               ),
               MenuButton(
                 text: const Text("New JSON file"),
@@ -125,7 +111,7 @@ class _MenuState extends State<Menu>  {
                 onTap: () {
                   _tabBarKey.currentState?.addTab("", "Unsaved", null);
                 },
-              )
+              ),
             ],
           ),
         ),
@@ -142,7 +128,7 @@ class _MenuState extends State<Menu>  {
           ),
         ),
       ],
-      child: TabBarEditor(key: _tabBarKey),
+      child: TabBarEditor(key: _tabBarKey, saveRef: saveTo),
     );
   }
 
@@ -158,7 +144,7 @@ class _MenuState extends State<Menu>  {
             String tmp = await f.readAsString();
             _tabBarKey.currentState?.addTab(tmp, nameOf(x), x);
           },
-        )
+        ),
       );
     }
 
@@ -166,4 +152,21 @@ class _MenuState extends State<Menu>  {
   }
 
   String nameOf(String path) => _fileName.firstMatch(path)?.group(0) ?? path;
+  Future<String?> saveTo(String? p, dynamic cont) async {
+    String? path = p;
+    final isNew = path == null;
+
+    if (isNew) {
+      path = await FilePicker.saveFile(
+        dialogTitle: "Please select an output file",
+        fileName: "output.json",
+      );
+      if (path == null) return null;
+    }
+
+    await File(path).writeAsString(json.encode(cont));
+    if (isNew) await _pushRecentFile(path);
+
+    return path;
+  }
 }
