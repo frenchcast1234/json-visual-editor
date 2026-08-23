@@ -13,12 +13,11 @@ class Menu extends StatefulWidget {
   const Menu({super.key, this.onToggleTheme});
 
   @override
-  State<Menu> createState() => _MenuState();
+  State<Menu> createState() => MenuState();
 }
 
-class _MenuState extends State<Menu> {
-  late final GlobalKey<TabBarEditorState> _tabBarKey =
-      GlobalKey<TabBarEditorState>();
+class MenuState extends State<Menu> {
+  late final GlobalKey<TabBarEditorState> tabBarKey = GlobalKey<TabBarEditorState>();
   SharedPreferences? prefs;
   final _fileName = RegExp(r'[^/\\]+$');
 
@@ -34,7 +33,7 @@ class _MenuState extends State<Menu> {
     setState(() => prefs = p);
   }
 
-  Future<void> _pushRecentFile(String path) async {
+  Future<void> pushRecentFile(String path) async {
     final p = prefs;
     if (p == null) return;
 
@@ -58,6 +57,7 @@ class _MenuState extends State<Menu> {
               MenuButton(
                 text: const Text("Open file"),
                 icon: const Icon(Icons.open_in_new),
+                shortcutText: "CTRL+O",
                 onTap: () async {
                   FilePickerResult? result = await FilePicker.pickFiles(
                     allowMultiple: false,
@@ -69,14 +69,15 @@ class _MenuState extends State<Menu> {
                     PlatformFile file = result.files.first;
                     File f = File(file.path!);
                     String tmp = await f.readAsString();
-                    _tabBarKey.currentState?.addTab(tmp, file.name, file.path!);
-                    await _pushRecentFile(file.path!);
+                    tabBarKey.currentState?.addTab(tmp, file.name, file.path!);
+                    await pushRecentFile(file.path!);
                   }
                 },
               ),
               MenuButton(
                 text: const Text("Open recent file"),
                 icon: const Icon(Icons.history),
+                shortcutText: null,
                 submenu: SubMenu(
                   menuItems: getRecentFiles().isEmpty
                       ? [MenuButton(text: Text("No recent file"))]
@@ -86,8 +87,9 @@ class _MenuState extends State<Menu> {
               MenuButton(
                 text: const Text("Save file"),
                 icon: const Icon(Icons.save),
+                shortcutText: "CTRL+S",
                 onTap: () async {
-                  final tabBar = _tabBarKey.currentState;
+                  final tabBar = tabBarKey.currentState;
                   if (tabBar == null || !tabBar.hasTabs) return;
 
                   final path = await saveTo(tabBar.path(), tabBar.save());
@@ -97,8 +99,9 @@ class _MenuState extends State<Menu> {
               MenuButton(
                 text: const Text("Save as"),
                 icon: const Icon(Icons.save_as),
+                shortcutText: "CTRL+SHIFT+S",
                 onTap: () async {
-                  final tabBar = _tabBarKey.currentState;
+                  final tabBar = tabBarKey.currentState;
                   if (tabBar == null || !tabBar.hasTabs) return;
 
                   final path = await saveTo(null, tabBar.save());
@@ -108,8 +111,9 @@ class _MenuState extends State<Menu> {
               MenuButton(
                 text: const Text("New JSON file"),
                 icon: const Icon(Icons.open_in_new),
+                shortcutText: "CTRL+N",
                 onTap: () {
-                  _tabBarKey.currentState?.addTab("", "Unsaved", null);
+                  tabBarKey.currentState?.addTab("", "Unsaved", null);
                 },
               ),
             ],
@@ -122,13 +126,14 @@ class _MenuState extends State<Menu> {
               MenuButton(
                 text: const Text("Toggle theme"),
                 icon: const Icon(Icons.brightness_6),
+                shortcutText: "ALT+T",
                 onTap: () => widget.onToggleTheme?.call(),
               ),
             ],
           ),
         ),
       ],
-      child: TabBarEditor(key: _tabBarKey, saveRef: saveTo),
+      child: TabBarEditor(key: tabBarKey, saveRef: saveTo),
     );
   }
 
@@ -142,7 +147,7 @@ class _MenuState extends State<Menu> {
           onTap: () async {
             File f = File(x);
             String tmp = await f.readAsString();
-            _tabBarKey.currentState?.addTab(tmp, nameOf(x), x);
+            tabBarKey.currentState?.addTab(tmp, nameOf(x), x);
           },
         ),
       );
@@ -165,7 +170,7 @@ class _MenuState extends State<Menu> {
     }
 
     await File(path).writeAsString(json.encode(cont));
-    if (isNew) await _pushRecentFile(path);
+    if (isNew) await pushRecentFile(path);
 
     return path;
   }

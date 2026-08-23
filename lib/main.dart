@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:json_visual_editor/modules/color.dart';
-import 'package:json_visual_editor/ui/menu.dart';
 import 'dart:core';
+import 'package:json_visual_editor/modules/shortcut.dart';
 
 void main() {
   runApp(const MainApp());
@@ -63,7 +63,7 @@ class _MainAppState extends State<MainApp> {
       theme: _buildTheme(true),
       darkTheme: _buildTheme(false),
       themeMode: _themeMode,
-      home: Menu(onToggleTheme: _toggleTheme),
+      home: Shortcut(callback: _toggleTheme),
     );
   }
 }
