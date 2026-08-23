@@ -28,6 +28,8 @@ class _MainAppState extends State<MainApp> {
 
     return ThemeData(
       brightness: light ? Brightness.light : Brightness.dark,
+      scaffoldBackgroundColor: colors["surface"],
+      canvasColor: colors["surface"],
       listTileTheme: ListTileThemeData(
         tileColor: colors["surface"],
         iconColor: colors["accent"],
