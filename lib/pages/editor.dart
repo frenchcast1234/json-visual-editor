@@ -6,7 +6,6 @@ import 'package:json_visual_editor/ui/json_key_value.dart';
 import 'package:json_visual_editor/ui/json_list.dart';
 import 'package:json_visual_editor/ui/json_map.dart';
 import 'package:json_visual_editor/ui/json_value.dart';
-import 'package:json_visual_editor/modules/color.dart';
 
 class Editor extends StatefulWidget {
   final ValueNotifier<String?> content;
@@ -145,12 +144,10 @@ class EditorState extends State<Editor> {
                     )
                   );
                 },
-                child: Builder(
-                  builder: (context) => Container(
-                    width: double.infinity,
-                    height: 120,
-                    color: Coolors.getSurfaceColor(context),
-                  ),
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(
+                  width: double.infinity,
+                  height: 120,
                 ),
               )
             ],
