@@ -14,7 +14,7 @@ class JsonKeyValue extends StatefulWidget {
 
   final void Function(Widget child)? onDelete;
   final VoidCallback unsavedRef;
-  int index;
+  final int index;
   final void Function(int insertIndex, dynamic element) insertRef;
 
   JsonKeyValue({
@@ -32,8 +32,6 @@ class JsonKeyValue extends StatefulWidget {
 }
 
 class _JsonKeyValueState extends State<JsonKeyValue> {
-  JsonKeyValue get widget => super.widget;
-
   final Map<Type, IconData> iconsType = {
     int: Icons.numbers,
     double: Icons.numbers,

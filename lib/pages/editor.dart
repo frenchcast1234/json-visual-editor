@@ -12,7 +12,7 @@ class Editor extends StatefulWidget {
   final String? path;
   final VoidCallback unsave;
 
-  Editor({
+  const Editor({
     super.key,
     required this.content,
     required this.path,
@@ -25,8 +25,6 @@ class Editor extends StatefulWidget {
 }
 
 class EditorState extends State<Editor> {
-  Editor get widget => super.widget;
-
   late String? _path = widget.path;
 
   String template = r"""
@@ -61,39 +59,50 @@ class EditorState extends State<Editor> {
 ]
 """;
 
-  var decoded;
+  dynamic decoded;
   List root = [];
   late bool saved = widget.path != null && widget.path != "";
   
   @override
   void initState() {
     super.initState();
+    _load();
+    widget.content.addListener(_load);
+  }
 
-    print(root);
-    
-    widget.content.addListener(() => setState(() {
-      dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
+  @override
+  void dispose() {
+    widget.content.removeListener(_load);
+    super.dispose();
+  }
 
-      if (widget.content.value == "") return;
-    
-      if (tmp.toString().startsWith("{")) {
-        decoded = tmp as Map;
-      } else if (tmp.toString().startsWith("[")) {
-        decoded = tmp as List;
-      }
-      root = create(decoded);
-    }));
+  void _load() {
+    final raw = widget.content.value;
+    if (raw == "") return;
+
+    dynamic tmp;
+    try {
+      tmp = json.decode(raw ?? template);
+    } on FormatException catch (e) {
+      _showError("Invalid JSON: ${e.message}");
+      return;
+    }
 
     setState(() {
-      if (widget.content.value == "") return;
-
-      dynamic tmp = widget.content.value == null ? json.decode(template) : json.decode(widget.content.value!);
-      if (tmp.toString().startsWith("{")) {
-        decoded = tmp as Map;
-      } else if (tmp.toString().startsWith("[")) {
-        decoded = tmp as List;
-      }
+      if (tmp is Map || tmp is List) decoded = tmp;
       root = create(decoded);
+    });
+  }
+
+  void _showError(String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     });
   }
 
@@ -178,7 +187,7 @@ class EditorState extends State<Editor> {
     );
   }
 
-  List<Widget> create(var m) {
+  List<Widget> create(dynamic m) {
     List<Widget> l = [];
     int i = 0;
 
@@ -202,7 +211,7 @@ class EditorState extends State<Editor> {
   }
 
   dynamic save() { // Return Map|List
-    var r; // r=return
+    dynamic r; // r=return
     if (decoded is Map) { r = {}; }
     else if (decoded is List) { r = []; }
 

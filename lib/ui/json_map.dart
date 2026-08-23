@@ -36,7 +36,6 @@ class JsonMap extends StatefulWidget {
 }
 
 class JsonMapState extends State<JsonMap> {
-  JsonMap get widget => super.widget;
   late List content = create(widget.v);
   late String k = widget.k ?? "key";
 
@@ -151,16 +150,6 @@ class JsonMapState extends State<JsonMap> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Container(
-            //   width: double.infinity,
-            //   decoration: BoxDecoration(
-            //     border: Border(
-            //       top: BorderSide(
-            //         width: 1.0
-            //       )
-            //     )
-            //   ),
-            // ),
             if (widget.k != null) ... [
               Padding(
                 padding: const EdgeInsets.only(left: 16.0, top: 16.0),

@@ -27,8 +27,6 @@ class JsonValue extends StatefulWidget {
 }
 
 class _JsonValueState extends State<JsonValue> {
-  @override
-  JsonValue get widget => super.widget;
 
   final Map<Type, IconData> iconsType = {
     int: Icons.numbers,

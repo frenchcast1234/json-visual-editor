@@ -41,7 +41,6 @@ class JsonList extends StatefulWidget {
 }
 
 class JsonListState extends State<JsonList> {
-  JsonList get widget => super.widget;
   late List content = create(widget.v);
   late String k = widget.k ?? "key";
   CurrentState currentState = CurrentState.title;

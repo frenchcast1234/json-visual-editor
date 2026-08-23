@@ -24,7 +24,7 @@ class _MainAppState extends State<MainApp> {
   }
 
   ThemeData _buildTheme(bool light) {
-    final colors = Coolors.Current(light);
+    final colors = Coolors.current(light);
 
     return ThemeData(
       brightness: light ? Brightness.light : Brightness.dark,
