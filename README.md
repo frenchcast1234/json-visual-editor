@@ -25,4 +25,23 @@
 * Dark theme  
   <img src="assets/example/example2.png" height="500">
 
+## Build / Run
+* Windows
+  ```bash
+  flutter run -d windows # run
+  flutter build windows # build
+  ```
+* MacOS
+  ```bash
+  flutter run -d macos # run
+  flutter build macos # build
+  ```
+* Linux
+  ```bash
+  flutter run -d linux # run
+  flutter build linux # build
+  ```
+
+--- 
+
 > Enjoy editing JSON !
