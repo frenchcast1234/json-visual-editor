@@ -73,7 +73,7 @@ class TabBarEditorState extends State<TabBarEditor>
       editors.add(
         Editor(
           key: k,
-          content: ValueNotifier<String?>(content),
+          content: ValueNotifier<String>(content),
           path: path,
           unsave: () => refresh(k),
         ),

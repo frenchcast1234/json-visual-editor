@@ -8,7 +8,7 @@ import 'package:json_visual_editor/ui/json_map.dart';
 import 'package:json_visual_editor/ui/json_value.dart';
 
 class Editor extends StatefulWidget {
-  final ValueNotifier<String?> content;
+  final ValueNotifier<String> content;
   final String? path;
   final VoidCallback unsave;
 
@@ -26,38 +26,6 @@ class Editor extends StatefulWidget {
 
 class EditorState extends State<Editor> {
   late String? _path = widget.path;
-
-  String template = r"""
-[
-  "dog",
-  "cat",
-  "fish",
-  [
-    1,
-    2,
-    3,
-    4
-  ],
-  {
-    "one": [
-      "tomato",
-      "potato",
-      "apple", 
-      "carot"
-    ],
-    "two": {
-      "a": true,
-      "b": false,
-      "c": false
-    },
-    "int": 1,
-    "float": 3.14,
-    "bool": false,
-    "str": "Hello world!",
-    "null": null
-  }
-]
-""";
 
   dynamic decoded;
   List root = [];
@@ -82,7 +50,7 @@ class EditorState extends State<Editor> {
 
     dynamic tmp;
     try {
-      tmp = json.decode(raw ?? template);
+      tmp = json.decode(raw);
     } on FormatException catch (e) {
       _showError("Invalid JSON: ${e.message}");
       return;
