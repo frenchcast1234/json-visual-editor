@@ -5,7 +5,8 @@ import 'package:json_visual_editor/ui/json_list.dart';
 
 enum CurrentState {
   title,
-  edit
+  edit,
+  key
 }
 
 class JsonKeyValue extends StatefulWidget {
@@ -43,9 +44,7 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
   };
 
   final TextEditingController _controller = TextEditingController();
-  final TextEditingController _controller2 = TextEditingController();
 
-  late Widget content = Text("${widget.k} : ${widget.v}");
   CurrentState currentState = CurrentState.title;
 
   @override
@@ -63,27 +62,8 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
                   icon: Icon(Icons.edit),
                   value: "edit",
                   onSelected: (_) => setState(() {
-                    if (currentState == CurrentState.title) {
-                      currentState = CurrentState.edit;
-                      _controller2.text = widget.k;
-                      var oldk = widget.k;
-                      setState(() {
-                        content = TextField(
-                          controller: _controller2,
-                          onSubmitted: (value) => setState(() {
-                            widget.k = value.trim().isEmpty ? oldk : value;
-                            currentState = CurrentState.title;
-                            content = Text("${widget.k} : ${widget.v}");
-                            widget.unsavedRef();
-                          }),
-                        );
-                      });
-                    } else if (currentState == CurrentState.edit) {
-                      currentState == CurrentState.title;
-                      setState(() {
-                        content = Text("${widget.k} : ${widget.v}");
-                      });
-                    }
+                    currentState = CurrentState.key;
+                    _controller.text = widget.k;
                   })
                 ),
                 MenuItem<String>(
@@ -150,36 +130,32 @@ class _JsonKeyValueState extends State<JsonKeyValue> {
         },
         child: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc)
       ),
-      title: content,
-      onTap: _onTap
+      title: currentState == CurrentState.title
+          ? Text("${widget.k} : ${widget.v.toString()}")
+          : TextField(
+            controller: _controller,
+            onSubmitted: (value) => setState(() {
+              if (currentState == CurrentState.edit) {
+                if (int.tryParse(value) != null) { widget.v = int.parse(value); }
+                else if (double.tryParse(value) != null) { widget.v = double.parse(value); }
+                else if (value == "true") { widget.v = true; }
+                else if (value == "false") { widget.v = false; }
+                else if (value == "null") { widget.v = null; }
+                else { widget.v = value; }
+              } else if (currentState == CurrentState.key) {
+                var oldk = widget.k;
+                widget.k = value.trim().isEmpty ? oldk : value;
+              }
+              
+              currentState = CurrentState.title;
+              widget.unsavedRef();
+            }),
+          ),
+      onTap: () => setState(() {
+        if (currentState != CurrentState.title) return;
+        currentState = CurrentState.edit;
+        _controller.text = widget.v.toString();
+      })
     );
-  }
-
-  void _onTap() {
-    if (currentState == CurrentState.title) {
-      currentState = CurrentState.edit;
-      _controller.text = widget.v.toString();
-      setState(() {
-        content = TextField(
-          controller: _controller,
-          onSubmitted: (value) => setState(() {
-            if (int.tryParse(value) != null) { widget.v = int.parse(value); }
-            else if (double.tryParse(value) != null) { widget.v = double.parse(value); }
-            else if (value == "true") { widget.v = true; }
-            else if (value == "false") { widget.v = false; }
-            else if (value == "null") { widget.v = null; }
-            else { widget.v = value; }
-            currentState = CurrentState.title;
-            content = Text("${widget.k} : ${widget.v}");
-            widget.unsavedRef();
-          }),
-        );
-      });
-    } else if (currentState == CurrentState.edit) {
-      currentState == CurrentState.title;
-      setState(() {
-        content = Text("${widget.k} : ${widget.v}");
-      });
-    }
   }
 }

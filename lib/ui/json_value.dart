@@ -37,9 +37,8 @@ class _JsonValueState extends State<JsonValue> {
     Map: Icons.map,
     Null: Icons.close,
   };
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller = TextEditingController(text: widget.v.toString());
 
-  late Widget content = Text("${widget.v}");
   CurrentState currentState = CurrentState.title;
 
   @override
@@ -116,29 +115,17 @@ class _JsonValueState extends State<JsonValue> {
         },
         child: Icon(iconsType[widget.v.runtimeType] ?? Icons.abc),
       ),
-      title: content,
-      onTap: () => setState(() {
-        if (currentState == CurrentState.title) {
-          currentState = CurrentState.edit;
-          _controller.text = widget.v;
-          setState(() {
-            content = TextField(
-              controller: _controller,
-              onSubmitted: (value) => setState(() {
-                widget.v = value;
-                currentState = CurrentState.title;
-                content = Text(widget.v);
-                widget.unsavedRef();
-              }),
-            );
-          });
-        } else if (currentState == CurrentState.edit) {
-          currentState == CurrentState.title;
-          setState(() {
-            content = Text(widget.v);
-          });
-        }
-      }),
+      title: currentState == CurrentState.title
+          ? Text(widget.v.toString())
+          : TextField(
+            controller: _controller,
+            onSubmitted: (value) => setState(() {
+              widget.v = value;
+              currentState = CurrentState.title;
+              widget.unsavedRef();
+            }),
+          ),
+      onTap: () => setState(() => currentState = CurrentState.edit),
     );
   }
 }

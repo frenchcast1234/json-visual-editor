@@ -209,7 +209,7 @@ class JsonMapState extends State<JsonMap> {
   Map<String, dynamic> rtn() { 
     Map<String, dynamic> r = {};
 
-    for (dynamic g in content) { // Random variable name
+    for (dynamic g in content) {
       if (g is JsonKeyValue) {
         r[g.k] = g.v;
       } else if (g is JsonMap) {
