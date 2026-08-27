@@ -13,9 +13,8 @@ class TabBarEditor extends StatefulWidget {
   State<TabBarEditor> createState() => TabBarEditorState();
 }
 
-class TabBarEditorState extends State<TabBarEditor>
-    with TickerProviderStateMixin {
-  late TabController _tabController = _makeController(0);
+class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixin {
+  late TabController tabController = _makeController(0);
 
   final List<GlobalKey<EditorState>> editorKeys = [];
   final List<Editor> editors = [];
@@ -36,7 +35,7 @@ class TabBarEditorState extends State<TabBarEditor>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    tabController.dispose();
     super.dispose();
   }
 
@@ -48,7 +47,7 @@ class TabBarEditorState extends State<TabBarEditor>
           : AppBar(
               title: null,
               bottom: TabBar(
-                controller: _tabController,
+                controller: tabController,
                 isScrollable: true,
                 tabAlignment: TabAlignment.start,
                 splashFactory: NoSplash.splashFactory,
@@ -62,7 +61,7 @@ class TabBarEditorState extends State<TabBarEditor>
               color: Coolors.getSurfaceColor(context),
               child: Center(child: Text("Open a JSON file")),
             )
-          : IndexedStack(index: _tabController.index, children: editors),
+          : IndexedStack(index: tabController.index, children: editors),
     );
   }
 
@@ -80,16 +79,16 @@ class TabBarEditorState extends State<TabBarEditor>
       );
       names.add(tab(k, path == "" || path == null ? "$name*" : name));
 
-      if (editors.length != _tabController.length) {
-        final oldIndex = _tabController.index;
+      if (editors.length != tabController.length) {
+        final oldIndex = tabController.index;
 
         final newIndex = oldIndex >= editors.length
             ? editors.length - 1
             : oldIndex;
 
-        _tabController.removeListener(_onIndexChanged);
-        _tabController.dispose();
-        _tabController = _makeController(newIndex);
+        tabController.removeListener(_onIndexChanged);
+        tabController.dispose();
+        tabController = _makeController(newIndex);
       }
     });
   }
@@ -130,7 +129,7 @@ class TabBarEditorState extends State<TabBarEditor>
     if (i == -1) return;
 
     setState(() {
-      var index = _tabController.index;
+      var index = tabController.index;
 
       editorKeys.removeAt(i);
       editors.removeAt(i);
@@ -140,9 +139,9 @@ class TabBarEditorState extends State<TabBarEditor>
       if (index > editors.length - 1) index = editors.length - 1;
       if (index < 0) index = 0;
 
-      _tabController.removeListener(_onIndexChanged);
-      _tabController.dispose();
-      _tabController = _makeController(index);
+      tabController.removeListener(_onIndexChanged);
+      tabController.dispose();
+      tabController = _makeController(index);
     });
   }
 
@@ -175,11 +174,11 @@ class TabBarEditorState extends State<TabBarEditor>
   }
 
   dynamic save() {
-    return editorKeys[_tabController.index].currentState!.save();
+    return editorKeys[tabController.index].currentState!.save();
   }
 
   String? path() {
-    return editorKeys[_tabController.index].currentState!.path();
+    return editorKeys[tabController.index].currentState!.path();
   }
 
   void refresh(GlobalKey<EditorState> key) {
@@ -196,7 +195,7 @@ class TabBarEditorState extends State<TabBarEditor>
   }
 
   void markSaved(String path) {
-    final key = editorKeys[_tabController.index];
+    final key = editorKeys[tabController.index];
     key.currentState!
       ..setPath(path)
       ..setSaved();

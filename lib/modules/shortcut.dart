@@ -62,6 +62,20 @@ class ShortcutState extends State<Shortcut> {
       _tabBar?.addTab("", "Unsaved", null);
       return true;
     }
+    if (ctrl && !alt && !shift && key == LogicalKeyboardKey.keyW) {
+      if (!_tabBar!.hasTabs) return false;
+      _tabBar?.closeTab(_tabBar!.editorKeys[_tabBar!.tabController.index]);
+      return true;
+    }
+    if (ctrl && !alt && key == LogicalKeyboardKey.tab) {
+      final tabBar = _tabBar;
+      if (tabBar == null || !tabBar.hasTabs) return false;
+
+      final n = tabBar.editors.length;
+      final i = tabBar.tabController.index;
+      tabBar.tabController.index = shift ? (i - 1 + n) % n : (i + 1) % n;
+      return true;
+    }
     if (alt && !ctrl && !shift && key == LogicalKeyboardKey.keyT) {
       widget.callback();
       prefs?.setInt('theme', ((prefs?.getInt('theme') ?? 0) - 1).abs());
