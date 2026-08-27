@@ -6,7 +6,8 @@ import 'package:json_visual_editor/modules/color.dart';
 
 enum CurrentState {
   title,
-  edit
+  edit,
+  folded
 }
 
 class JsonMap extends StatefulWidget {
@@ -150,6 +151,7 @@ class JsonMapState extends State<JsonMap> {
             )
           );
         },
+        onTapDown: (_) => setState(() => currentState = currentState == CurrentState.folded ? CurrentState.title : CurrentState.folded),
         child: Icon(Icons.map)
       ),
       title: Container(
@@ -161,33 +163,41 @@ class JsonMapState extends State<JsonMap> {
             )
           )
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.k != null) ... [
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-                child: currentState == CurrentState.title
-                    ? Text(k)
-                    : TextField(
-                      controller: _kController,
-                      onSubmitted: (value) => setState(() {
-                        var oldk = k;
-                        k = value.trim().isEmpty ? oldk : value;
-                        currentState = CurrentState.title;
-                        widget.unsavedRef();
-                      }),
-                    ),
-              )
-            ],
-            Column(
-              children: content.isEmpty
-                  ? [ SizedBox(height: 48.0) ]
-                  : content as List<Widget>
+        child: currentState != CurrentState.folded
+            ? Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.k != null) ... [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+                    child: currentState == CurrentState.title
+                        ? Text(k)
+                        : TextField(
+                          controller: _kController,
+                          onSubmitted: (value) => setState(() {
+                            var oldk = k;
+                            k = value.trim().isEmpty ? oldk : value;
+                            currentState = CurrentState.title;
+                            widget.unsavedRef();
+                          }),
+                        ),
+                  )
+                ],
+                Column(
+                  children: content.isEmpty
+                      ? [ SizedBox(height: 48.0) ]
+                      : content as List<Widget>
+                )
+              ]
             )
-          ]
-        ),
+            : Padding(
+              padding: EdgeInsets.only(left: 16.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Icon(Icons.more_horiz, size: 48.0)
+              )
+            )
       ),
     );
   }
