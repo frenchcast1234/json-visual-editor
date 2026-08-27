@@ -39,6 +39,17 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     super.dispose();
   }
 
+  bool get hasUnsaved => editorKeys.any((k) => k.currentState?.saved == false);
+
+  Future<bool> saveAll() async {
+    for (final k in editorKeys) {
+      final e = k.currentState;
+      if (e == null || e.saved) continue;
+      if (await widget.saveRef(e.path(), e.save()) == null) return false;  // annulé → on n'quitte pas
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +16,7 @@ class Shortcut extends StatefulWidget {
   State<Shortcut> createState() => ShortcutState();
 }
 
-class ShortcutState extends State<Shortcut> {
+class ShortcutState extends State<Shortcut> with WidgetsBindingObserver {
   final GlobalKey<MenuState> menuKey = GlobalKey<MenuState>();
   SharedPreferences? prefs;
 
@@ -32,13 +33,39 @@ class ShortcutState extends State<Shortcut> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_onKey);
+     WidgetsBinding.instance.addObserver(this);
     _loadPrefs();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     HardwareKeyboard.instance.removeHandler(_onKey);
     super.dispose();
+  }
+
+  @override
+  Future<AppExitResponse> didRequestAppExit() async {
+    final tabBar = _tabBar;
+    if (tabBar == null || !tabBar.hasUnsaved) return AppExitResponse.exit;
+
+    final choice = await showDialog<CloseChoice>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Warning"),
+        content: const Text("Some tabs are not saved."),
+        icon: const Icon(Icons.warning),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(CloseChoice.cancel),  child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(CloseChoice.discard), child: const Text("Don't save")),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(CloseChoice.save),    child: const Text("Save")),
+        ],
+      ),
+    );
+
+    if (choice == null || choice == CloseChoice.cancel) return AppExitResponse.cancel;
+    if (choice == CloseChoice.save && !await tabBar.saveAll()) return AppExitResponse.cancel;
+    return AppExitResponse.exit;
   }
 
   bool _onKey(KeyEvent e) {
