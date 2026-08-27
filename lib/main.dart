@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:json_visual_editor/modules/color.dart';
 import 'dart:core';
 import 'package:json_visual_editor/modules/shortcut.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MainApp());
@@ -16,6 +17,24 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   ThemeMode _themeMode = ThemeMode.light;
+  late SharedPreferences prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  void _loadPrefs() async {
+    final p = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => prefs = p);
+    if (p.getInt('theme') == 0) { 
+      _themeMode = ThemeMode.light;
+    } else if (p.getInt('theme') == 1) {
+      _themeMode = ThemeMode.dark;
+    }
+  }
 
   void _toggleTheme() {
     setState(() {

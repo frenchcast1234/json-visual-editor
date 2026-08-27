@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:json_visual_editor/ui/menu.dart';
 import 'package:json_visual_editor/ui/tab_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Shortcut extends StatefulWidget {
   final void Function() callback;
@@ -16,6 +17,13 @@ class Shortcut extends StatefulWidget {
 
 class ShortcutState extends State<Shortcut> {
   final GlobalKey<MenuState> menuKey = GlobalKey<MenuState>();
+  SharedPreferences? prefs;
+
+  Future<void> _loadPrefs() async {
+    final p = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => prefs = p);
+  }
 
   MenuState? get _menu => menuKey.currentState;
   TabBarEditorState? get _tabBar => _menu?.tabBarKey.currentState;
@@ -24,6 +32,7 @@ class ShortcutState extends State<Shortcut> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(_onKey);
+    _loadPrefs();
   }
 
   @override
@@ -55,6 +64,7 @@ class ShortcutState extends State<Shortcut> {
     }
     if (alt && !ctrl && !shift && key == LogicalKeyboardKey.keyT) {
       widget.callback();
+      prefs?.setInt('theme', ((prefs?.getInt('theme') ?? 0) - 1).abs());
       return true;
     }
 

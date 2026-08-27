@@ -8,9 +8,9 @@ import 'package:menu_bar/menu_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Menu extends StatefulWidget {
-  final VoidCallback? onToggleTheme;
+  final VoidCallback onToggleTheme;
 
-  const Menu({super.key, this.onToggleTheme});
+  const Menu({super.key, required this.onToggleTheme});
 
   @override
   State<Menu> createState() => MenuState();
@@ -127,7 +127,10 @@ class MenuState extends State<Menu> {
                 text: const Text("Toggle theme"),
                 icon: const Icon(Icons.brightness_6),
                 shortcutText: "ALT+T",
-                onTap: () => widget.onToggleTheme?.call(),
+                onTap: () {
+                  widget.onToggleTheme.call();
+                  prefs?.setInt('theme', ((prefs?.getInt('theme') ?? 0) - 1).abs());
+                },
               ),
             ],
           ),
