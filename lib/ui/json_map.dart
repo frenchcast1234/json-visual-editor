@@ -4,6 +4,11 @@ import 'package:json_visual_editor/ui/json_list.dart';
 import 'package:json_visual_editor/ui/json_key_value.dart';
 import 'package:json_visual_editor/modules/color.dart';
 
+enum CurrentState {
+  title,
+  edit
+}
+
 class JsonMap extends StatefulWidget {
   final Map v;
   final String? k;
@@ -38,6 +43,8 @@ class JsonMap extends StatefulWidget {
 class JsonMapState extends State<JsonMap> {
   late List content = create(widget.v);
   late String k = widget.k ?? "key";
+  CurrentState currentState = CurrentState.title;
+  late final TextEditingController _kController = TextEditingController(text: k);
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +79,14 @@ class JsonMapState extends State<JsonMap> {
                   onSelected: (value) => setState(() {
                     content.add(JsonMap(v: {}, k: "key", unsavedRef: widget.unsavedRef, index: content.length, insertRef: insert, onDelete: removeChild));
                   }),
+                ),
+                MenuItem<String>(
+                  label: Text("Edit key"),
+                  icon: Icon(Icons.edit),
+                  value: "edit",
+                  onSelected: (_) => setState(() {
+                    currentState = currentState == CurrentState.title ? CurrentState.edit : CurrentState.title;
+                  })
                 ),
                 MenuItem<String>(
                   label: Text("Delete element"),
@@ -153,7 +168,17 @@ class JsonMapState extends State<JsonMap> {
             if (widget.k != null) ... [
               Padding(
                 padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-                child: Text(widget.k!),
+                child: currentState == CurrentState.title
+                    ? Text(k)
+                    : TextField(
+                      controller: _kController,
+                      onSubmitted: (value) => setState(() {
+                        var oldk = k;
+                        k = value.trim().isEmpty ? oldk : value;
+                        currentState = CurrentState.title;
+                        widget.unsavedRef();
+                      }),
+                    ),
               )
             ],
             Column(
