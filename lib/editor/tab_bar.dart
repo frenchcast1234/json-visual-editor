@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:json_visual_editor/pages/editor.dart';
-import 'package:json_visual_editor/modules/color.dart';
+import 'package:json_visual_editor/editor/editor.dart';
+import 'package:json_visual_editor/theme/color.dart';
 
 enum CloseChoice { save, discard, cancel }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class Coolors {
-
   static Map<String, Color> lightThemeColors = {
     "primary": Color(0xFF2461D0),
     "dark": Color(0xFF10151F),
