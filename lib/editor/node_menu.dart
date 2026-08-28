@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:json_visual_editor/model/json_node.dart';
 
-ContextMenu<void> nodeMenu(JsonNode n, Offset at, {required VoidCallback changed, required VoidCallback editKey}) {
+ContextMenu<void> nodeMenu(JsonNode n, Offset at, {required void Function(VoidCallback) edit, required VoidCallback editKey}) {
   final p = n.parent;
 
   MenuItem<void> item(String label, IconData icon, VoidCallback act) => MenuItem<void>(
     label: Text(label), 
     icon: Icon(icon), 
-    onSelected: (_) { 
-      act(); changed(); 
-    }
+    onSelected: (_) => edit(act)
   );
 
   List<MenuItem<void>> spawn(void Function(JsonNode) place) => [

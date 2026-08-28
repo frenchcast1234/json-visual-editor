@@ -62,6 +62,25 @@ class AppMenuBar extends StatelessWidget {
           ),
         ),
         BarButton(
+          text: const Text("Edit"),
+          submenu: SubMenu(
+            menuItems: [
+              MenuButton(
+                text: const Text("Undo"),
+                icon: const Icon(Icons.undo),
+                shortcutText: "CTRL+Z",
+                onTap: actions.undo,
+              ),
+              MenuButton(
+                text: const Text("Redo"),
+                icon: const Icon(Icons.redo),
+                shortcutText: "CTRL+Y",
+                onTap: actions.redo,
+              ),
+            ],
+          ),
+        ),
+        BarButton(
           text: const Text("View"),
           submenu: SubMenu(
             menuItems: [

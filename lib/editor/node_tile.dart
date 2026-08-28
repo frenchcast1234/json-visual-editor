@@ -7,11 +7,11 @@ import 'package:json_visual_editor/theme/color.dart';
 enum _Editing { none, key, value }
 
 class NodeTile extends StatefulWidget {
-  NodeTile({required this.node, required this.changed}) : super(key: ValueKey(node));
+  NodeTile({required this.node, required this.edit}) : super(key: ValueKey(node));
 
   final JsonNode node;
 
-  final VoidCallback changed;
+  final void Function(VoidCallback) edit;
 
   @override
   State<NodeTile> createState() => _NodeTileState();
@@ -40,11 +40,11 @@ class _NodeTileState extends State<NodeTile> {
     try {
       if (_editing == _Editing.key) {
         final k = raw.trim();
-        if (k.isNotEmpty) n.key = k;
+        if (k.isNotEmpty) widget.edit(() => n.key = k);
       } else if (n is LeafNode) {
-        n.setText(raw);
+        final value = n.type.parse(raw);   // leve ici, hors de edit()
+        widget.edit(() => n.value = value);
       }
-      widget.changed();
     } on FormatException catch (e) {
       _report(e.message);
     }
@@ -60,7 +60,7 @@ class _NodeTileState extends State<NodeTile> {
     contextMenu: nodeMenu(
       node,
       at,
-      changed: widget.changed,
+      edit: widget.edit,
       editKey: () => _edit(_Editing.key),
     ),
   );
@@ -133,7 +133,7 @@ class _NodeTileState extends State<NodeTile> {
                   const SizedBox(height: 48.0)
                 else
                   for (final child in container.children)
-                    NodeTile(node: child, changed: widget.changed),
+                    NodeTile(node: child, edit: widget.edit),
               ],
             ),
     );

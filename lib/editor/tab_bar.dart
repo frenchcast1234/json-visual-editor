@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:json_visual_editor/editor/editor.dart';
+import 'package:json_visual_editor/model/document.dart';
+import 'package:json_visual_editor/storage/json_file.dart';
 import 'package:json_visual_editor/theme/color.dart';
 
 enum CloseChoice { save, discard, cancel }
@@ -16,16 +18,16 @@ class TabBarEditor extends StatefulWidget {
 class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixin {
   late TabController tabController = _makeController(0);
 
-  final List<GlobalKey<EditorState>> editorKeys = [];
-  final List<Editor> editors = [];
-  final List<Tab> names = [];
-  final _fileName = RegExp(r'[^/\\]+$');
+  final List<Document> documents = [];
 
-  bool get hasTabs => editors.isNotEmpty;
+  bool get hasTabs => documents.isNotEmpty;
+  bool get hasUnsaved => documents.any((d) => !d.saved);
+
+  Document? get current => hasTabs ? documents[tabController.index] : null;
 
   TabController _makeController(int index) {
     return TabController(
-      length: editors.length,
+      length: documents.length,
       initialIndex: index,
       vsync: this,
     )..addListener(_onIndexChanged);
@@ -33,19 +35,26 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
 
   void _onIndexChanged() => setState(() {});
 
+  // Un document notifie quand il est modifie, sauve ou annule : le titre de
+  // l'onglet suit. Remplace le callback unsave remonte a la main.
+  void _onDocumentChanged() => setState(() {});
+
   @override
   void dispose() {
+    for (final d in documents) {
+      d.removeListener(_onDocumentChanged);
+      d.dispose();
+    }
     tabController.dispose();
     super.dispose();
   }
 
-  bool get hasUnsaved => editorKeys.any((k) => k.currentState?.saved == false);
-
   Future<bool> saveAll() async {
-    for (final k in editorKeys) {
-      final e = k.currentState;
-      if (e == null || e.saved) continue;
-      if (await widget.saveRef(e.path(), e.save()) == null) return false;  // annulé → on n'quitte pas
+    for (final d in documents) {
+      if (d.saved) continue;
+      final path = await widget.saveRef(d.path, d.toJson());
+      if (path == null) return false;  // annulé → on n'quitte pas
+      d.markSaved(path);
     }
     return true;
   }
@@ -53,7 +62,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: editors.isEmpty
+      appBar: documents.isEmpty
           ? null
           : AppBar(
               title: null,
@@ -63,38 +72,32 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
                 tabAlignment: TabAlignment.start,
                 splashFactory: NoSplash.splashFactory,
                 overlayColor: WidgetStateProperty.all(Colors.transparent),
-                tabs: names,
+                tabs: [for (final d in documents) tab(d)],
               ),
               toolbarHeight: 0,
             ),
-      body: editors.isEmpty
+      body: documents.isEmpty
           ? Container(
               color: Coolors.getSurfaceColor(context),
               child: Center(child: Text("Open a JSON file")),
             )
-          : IndexedStack(index: tabController.index, children: editors),
+          : IndexedStack(
+              index: tabController.index,
+              children: [for (final d in documents) Editor(document: d)],
+            ),
     );
   }
 
-  void addTab(String content, String name, String? path) {
+  void addTab(Document document) {
     setState(() {
-      var k = GlobalKey<EditorState>();
-      editorKeys.add(k);
-      editors.add(
-        Editor(
-          key: k,
-          content: ValueNotifier<String>(content),
-          path: path,
-          unsave: () => refresh(k),
-        ),
-      );
-      names.add(tab(k, path == "" || path == null ? "$name*" : name));
+      document.addListener(_onDocumentChanged);
+      documents.add(document);
 
-      if (editors.length != tabController.length) {
+      if (documents.length != tabController.length) {
         final oldIndex = tabController.index;
 
-        final newIndex = oldIndex >= editors.length
-            ? editors.length - 1
+        final newIndex = oldIndex >= documents.length
+            ? documents.length - 1
             : oldIndex;
 
         tabController.removeListener(_onIndexChanged);
@@ -104,14 +107,17 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     });
   }
 
-  Tab tab(GlobalKey<EditorState> k, String text) {
+  Tab tab(Document document) {
+    final path = document.path;
+    final name = path == null || path == "" ? "Unsaved" : nameOf(path);
+
     return Tab(
       child: Row(
         children: [
           const SizedBox(width: 12.0),
-          Text(text),
+          Text(document.saved ? name : "$name*"),
           IconButton(
-            onPressed: () => closeTab(k),
+            onPressed: () => closeTab(document),
             icon: const Icon(Icons.close),
             iconSize: 24.0,
           ),
@@ -120,34 +126,33 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     );
   }
 
-  Future<void> closeTab(GlobalKey<EditorState> k) async {
-    final editor = k.currentState;
-
-    if (editor != null && !editor.saved) {
+  Future<void> closeTab(Document document) async {
+    if (!document.saved) {
       final choice = await _askSave();
 
       if (choice == null || choice == CloseChoice.cancel) return;
 
-      if (choice == CloseChoice.save &&
-          await widget.saveRef(editor.path(), editor.save()) == null) {
-        return;
+      if (choice == CloseChoice.save) {
+        final path = await widget.saveRef(document.path, document.toJson());
+        if (path == null) return;
+        document.markSaved(path);
       }
     }
 
     if (!mounted) return;
 
-    final i = editorKeys.indexOf(k);
+    final i = documents.indexOf(document);
     if (i == -1) return;
 
     setState(() {
       var index = tabController.index;
 
-      editorKeys.removeAt(i);
-      editors.removeAt(i);
-      names.removeAt(i);
+      documents.removeAt(i);
+      document.removeListener(_onDocumentChanged);
+      document.dispose();
 
       if (i < index) index -= 1;
-      if (index > editors.length - 1) index = editors.length - 1;
+      if (index > documents.length - 1) index = documents.length - 1;
       if (index < 0) index = 0;
 
       tabController.removeListener(_onIndexChanged);
@@ -182,34 +187,5 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
         );
       },
     );
-  }
-
-  dynamic save() {
-    return editorKeys[tabController.index].currentState!.save();
-  }
-
-  String? path() {
-    return editorKeys[tabController.index].currentState!.path();
-  }
-
-  void refresh(GlobalKey<EditorState> key) {
-    final i = editorKeys.indexOf(key);
-    if (i == -1) return;
-
-    final editor = key.currentState!;
-    final path = editor.path();
-    final name = path == null
-        ? "Unsaved"
-        : (_fileName.firstMatch(path)?.group(0) ?? path);
-
-    setState(() => names[i] = tab(key, editor.saved ? name : "$name*"));
-  }
-
-  void markSaved(String path) {
-    final key = editorKeys[tabController.index];
-    key.currentState!
-      ..setPath(path)
-      ..setSaved();
-    refresh(key);
   }
 }

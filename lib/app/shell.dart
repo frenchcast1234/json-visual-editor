@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:json_visual_editor/app/menu_bar.dart';
 import 'package:json_visual_editor/app/shortcuts.dart';
 import 'package:json_visual_editor/editor/tab_bar.dart';
+import 'package:json_visual_editor/model/document.dart';
 import 'package:json_visual_editor/storage/json_file.dart';
 import 'package:json_visual_editor/storage/settings.dart';
 
@@ -18,6 +19,8 @@ abstract interface class EditorActions {
   Future<void> save({bool asNew});
   void closeCurrentTab();
   void cycleTab(int delta);
+  void undo();
+  void redo();
   Future<void> toggleTheme();
 }
 
@@ -72,20 +75,28 @@ class ShellState extends State<Shell> with WidgetsBindingObserver implements Edi
       _report("Cannot open ${nameOf(path)}: ${e.osError?.message ?? e.message}");
       return;
     }
-    _tabBar?.addTab(content, nameOf(path), path);
+    final Document document;
+    try {
+      document = Document.parse(content, path: path);
+    } on FormatException catch (e) {
+      _report("Invalid JSON in ${nameOf(path)}: ${e.message}");
+      return;
+    }
+
+    _tabBar?.addTab(document);
     await settings.pushRecent(path);
   }
 
   @override
-  void newFile() => _tabBar?.addTab("", "Unsaved", null);
+  void newFile() => _tabBar?.addTab(Document());
 
   @override
   Future<void> save({bool asNew = false}) async {
-    final tabBar = _tabBar;
-    if (tabBar == null || !tabBar.hasTabs) return;
+    final document = _tabBar?.current;
+    if (document == null) return;
 
-    final path = await write(asNew ? null : tabBar.path(), tabBar.save());
-    if (path != null) tabBar.markSaved(path);
+    final path = await write(asNew ? null : document.path, document.toJson());
+    if (path != null) document.markSaved(path);
   }
 
   Future<String?> write(String? path, dynamic content) async {
@@ -105,17 +116,24 @@ class ShellState extends State<Shell> with WidgetsBindingObserver implements Edi
   @override
   void closeCurrentTab() {
     final tabBar = _tabBar;
-    if (tabBar == null || !tabBar.hasTabs) return;
-    tabBar.closeTab(tabBar.editorKeys[tabBar.tabController.index]);
+    final document = tabBar?.current;
+    if (tabBar == null || document == null) return;
+    tabBar.closeTab(document);
   }
 
   @override
   void cycleTab(int delta) {
     final tabBar = _tabBar;
     if (tabBar == null || !tabBar.hasTabs) return;
-    final n = tabBar.editors.length;
+    final n = tabBar.documents.length;
     tabBar.tabController.index = (tabBar.tabController.index + delta + n) % n;
   }
+
+  @override
+  void undo() => _tabBar?.current?.undo();
+
+  @override
+  void redo() => _tabBar?.current?.redo();
 
   @override
   Future<void> toggleTheme() => settings.toggleTheme();

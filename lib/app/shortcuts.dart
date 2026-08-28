@@ -35,7 +35,17 @@ class AppShortcuts {
       return true;
     }
 
+    if (key == LogicalKeyboardKey.keyZ) {
+      shift ? actions.redo() : actions.undo();
+      return true;
+    }
+
     if (shift) return false;
+
+    if (key == LogicalKeyboardKey.keyY) {
+      actions.redo();
+      return true;
+    }
 
     if (key == LogicalKeyboardKey.keyO) {
       actions.openFile();
