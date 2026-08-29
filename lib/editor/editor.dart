@@ -37,7 +37,7 @@ class Editor extends StatelessWidget {
                       r,
                       details.globalPosition,
                       edit: document.edit,
-                      editKey: () {}    // la racine n'a pas de cle
+                      editKey: () {}
                     )
                   );
                 },

@@ -42,7 +42,7 @@ class _NodeTileState extends State<NodeTile> {
         final k = raw.trim();
         if (k.isNotEmpty) widget.edit(() => n.key = k);
       } else if (n is LeafNode) {
-        final value = n.type.parse(raw);   // leve ici, hors de edit()
+        final value = n.type.parse(raw);
         widget.edit(() => n.value = value);
       }
     } on FormatException catch (e) {
@@ -81,7 +81,18 @@ class _NodeTileState extends State<NodeTile> {
         onTap: n is ContainerNode ? () => setState(() => n.folded = !n.folded) : null,
         child: Icon(n.icon),
       ),
-      onTap: n is LeafNode ? () => _edit(_Editing.value) : null,
+      trailing: n is LeafNode
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (n.key != null) 
+                  IconButton(onPressed: () => _edit(_Editing.key), icon: const Icon(Icons.key)),
+                IconButton(onPressed: () => _edit(_Editing.value), icon: const Icon(Icons.edit))
+              ],
+            )
+          : null,
       title: switch (n) {
         LeafNode leaf => _leaf(leaf),
         ContainerNode container => _container(container),
