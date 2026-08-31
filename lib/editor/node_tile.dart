@@ -108,6 +108,7 @@ class _NodeTileState extends State<NodeTile> {
         LeafNode leaf => _leaf(leaf),
         ContainerNode container => _container(container),
       },
+      onTap: n is MapNode || n is ListNode ? null : () {},
     );
   }
 
