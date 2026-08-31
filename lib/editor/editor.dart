@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:json_visual_editor/editor/node_clipboard.dart';
 import 'package:json_visual_editor/editor/node_menu.dart';
 import 'package:json_visual_editor/editor/node_tile.dart';
 import 'package:json_visual_editor/model/document.dart';
@@ -8,9 +9,12 @@ import 'package:json_visual_editor/model/json_node.dart';
 class Editor extends StatelessWidget {
   final Document document;
 
+  final NodeClipboard clipboard;
+
   const Editor({
     super.key,
-    required this.document
+    required this.document,
+    required this.clipboard
   });
 
   @override
@@ -28,7 +32,7 @@ class Editor extends StatelessWidget {
       body: r != null
           ? ListView(
             children: [
-              NodeTile(node: r, edit: document.edit),
+              NodeTile(node: r, edit: document.edit, clipboard: clipboard),
               GestureDetector(
                 onSecondaryTapDown: (details) {
                   showContextMenu<void>(
@@ -37,7 +41,8 @@ class Editor extends StatelessWidget {
                       r,
                       details.globalPosition,
                       edit: document.edit,
-                      editKey: () {}
+                      editKey: () {},
+                      clipboard: clipboard
                     )
                   );
                 },

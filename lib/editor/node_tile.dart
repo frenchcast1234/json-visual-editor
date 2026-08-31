@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:json_visual_editor/editor/node_clipboard.dart';
 import 'package:json_visual_editor/editor/node_menu.dart';
 import 'package:json_visual_editor/model/json_node.dart';
 import 'package:json_visual_editor/theme/color.dart';
@@ -7,11 +8,13 @@ import 'package:json_visual_editor/theme/color.dart';
 enum _Editing { none, key, value }
 
 class NodeTile extends StatefulWidget {
-  NodeTile({required this.node, required this.edit}) : super(key: ValueKey(node));
+  NodeTile({required this.node, required this.edit, required this.clipboard}) : super(key: ValueKey(node));
 
   final JsonNode node;
 
   final void Function(VoidCallback) edit;
+
+  final NodeClipboard clipboard;
 
   @override
   State<NodeTile> createState() => _NodeTileState();
@@ -40,7 +43,13 @@ class _NodeTileState extends State<NodeTile> {
     try {
       if (_editing == _Editing.key) {
         final k = raw.trim();
-        if (k.isNotEmpty) widget.edit(() => n.key = k);
+        final p = n.parent;
+        final taken = p is MapNode ? p[k] : null;
+        if (taken != null && taken != n) {
+          _report("$k is already used");
+        } else {
+          widget.edit(() => n.key = k);
+        }
       } else if (n is LeafNode) {
         final value = n.type.parse(raw);
         widget.edit(() => n.value = value);
@@ -62,6 +71,7 @@ class _NodeTileState extends State<NodeTile> {
       at,
       edit: widget.edit,
       editKey: () => _edit(_Editing.key),
+      clipboard: widget.clipboard
     ),
   );
 
@@ -144,7 +154,7 @@ class _NodeTileState extends State<NodeTile> {
                   const SizedBox(height: 48.0)
                 else
                   for (final child in container.children)
-                    NodeTile(node: child, edit: widget.edit),
+                    NodeTile(node: child, edit: widget.edit, clipboard: widget.clipboard),
               ],
             ),
     );

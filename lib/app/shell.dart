@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:json_visual_editor/app/menu_bar.dart';
 import 'package:json_visual_editor/app/shortcuts.dart';
+import 'package:json_visual_editor/editor/node_clipboard.dart';
 import 'package:json_visual_editor/editor/tab_bar.dart';
 import 'package:json_visual_editor/model/document.dart';
 import 'package:json_visual_editor/storage/json_file.dart';
@@ -36,6 +37,8 @@ class Shell extends StatefulWidget {
 class ShellState extends State<Shell> with WidgetsBindingObserver implements EditorActions {
   final tabBarKey = GlobalKey<TabBarEditorState>();
   late final AppShortcuts _shortcuts = AppShortcuts(this);
+
+  final NodeClipboard clipboard = NodeClipboard();
 
   TabBarEditorState? get _tabBar => tabBarKey.currentState;
 
@@ -172,6 +175,6 @@ class ShellState extends State<Shell> with WidgetsBindingObserver implements Edi
   @override
   Widget build(BuildContext context) => AppMenuBar(
     actions: this,
-    child: TabBarEditor(key: tabBarKey, saveRef: write),
+    child: TabBarEditor(key: tabBarKey, saveRef: write, clipboard: clipboard),
   );
 }

@@ -50,7 +50,7 @@ class MapNode extends ContainerNode {
 
   factory MapNode.fromJson(Map m, {String? key}) => MapNode(key: key)..addAll(m.entries.map((e) => JsonNode.fromJson(e.value, key: "${e.key}")));
 
-  @override void adopt(JsonNode child) => child.key ??= freeKey();
+  @override void adopt(JsonNode child) => child.key = freeKey(child.key ?? "key");
 
   @override Map<String, dynamic> toJson() => { for (final c in children) c.key!: c.toJson() };
   @override MapNode copy() => MapNode(key: key)..folded = folded..addAll(children.map((c) => c.copy()));

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:json_visual_editor/editor/editor.dart';
+import 'package:json_visual_editor/editor/node_clipboard.dart';
 import 'package:json_visual_editor/model/document.dart';
 import 'package:json_visual_editor/storage/json_file.dart';
 import 'package:json_visual_editor/theme/color.dart';
@@ -9,7 +10,9 @@ enum CloseChoice { save, discard, cancel }
 class TabBarEditor extends StatefulWidget {
   final Future<String?> Function(String? p, dynamic cont) saveRef;
 
-  const TabBarEditor({super.key, required this.saveRef});
+  final NodeClipboard clipboard;
+
+  const TabBarEditor({super.key, required this.saveRef, required this.clipboard});
 
   @override
   State<TabBarEditor> createState() => TabBarEditorState();
@@ -35,8 +38,6 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
 
   void _onIndexChanged() => setState(() {});
 
-  // Un document notifie quand il est modifie, sauve ou annule : le titre de
-  // l'onglet suit. Remplace le callback unsave remonte a la main.
   void _onDocumentChanged() => setState(() {});
 
   @override
@@ -53,7 +54,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
     for (final d in documents) {
       if (d.saved) continue;
       final path = await widget.saveRef(d.path, d.toJson());
-      if (path == null) return false;  // annulé → on n'quitte pas
+      if (path == null) return false;
       d.markSaved(path);
     }
     return true;
@@ -83,7 +84,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
             )
           : IndexedStack(
               index: tabController.index,
-              children: [for (final d in documents) Editor(document: d)],
+              children: [for (final d in documents) Editor(document: d, clipboard: widget.clipboard)],
             ),
     );
   }
