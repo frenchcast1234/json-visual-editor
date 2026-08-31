@@ -85,6 +85,7 @@ class _NodeTileState extends State<NodeTile> {
   Widget build(BuildContext context) {
     final n = node;
     return ListTile(
+      contentPadding: const EdgeInsets.only(left: 16.0),
       leading: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onSecondaryTapDown: (details) => _menu(details.globalPosition),
