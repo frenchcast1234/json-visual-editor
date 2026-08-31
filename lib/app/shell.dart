@@ -40,6 +40,9 @@ class ShellState extends State<Shell> with WidgetsBindingObserver implements Edi
 
   final NodeClipboard clipboard = NodeClipboard();
 
+  /// Vrai tant qu'un nœud est en cours de déplacement, où qu'il soit dans l'arbre.
+  final ValueNotifier<bool> dragging = ValueNotifier(false);
+
   TabBarEditorState? get _tabBar => tabBarKey.currentState;
 
   @override
@@ -59,6 +62,7 @@ class ShellState extends State<Shell> with WidgetsBindingObserver implements Edi
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _shortcuts.detach();
+    dragging.dispose();
     super.dispose();
   }
 
@@ -175,6 +179,6 @@ class ShellState extends State<Shell> with WidgetsBindingObserver implements Edi
   @override
   Widget build(BuildContext context) => AppMenuBar(
     actions: this,
-    child: TabBarEditor(key: tabBarKey, saveRef: write, clipboard: clipboard),
+    child: TabBarEditor(key: tabBarKey, saveRef: write, clipboard: clipboard, dragging: dragging),
   );
 }

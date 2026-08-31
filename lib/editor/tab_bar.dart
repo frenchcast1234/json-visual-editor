@@ -12,7 +12,9 @@ class TabBarEditor extends StatefulWidget {
 
   final NodeClipboard clipboard;
 
-  const TabBarEditor({super.key, required this.saveRef, required this.clipboard});
+  final ValueNotifier<bool> dragging;
+
+  const TabBarEditor({super.key, required this.saveRef, required this.clipboard, required this.dragging});
 
   @override
   State<TabBarEditor> createState() => TabBarEditorState();
@@ -84,7 +86,7 @@ class TabBarEditorState extends State<TabBarEditor> with TickerProviderStateMixi
             )
           : IndexedStack(
               index: tabController.index,
-              children: [for (final d in documents) Editor(document: d, clipboard: widget.clipboard)],
+              children: [for (final d in documents) Editor(document: d, clipboard: widget.clipboard, dragging: widget.dragging)],
             ),
     );
   }

@@ -13,6 +13,14 @@ sealed class JsonNode {
 
   void detach() => parent?.remove(this);
 
+  /// Vrai si [other] est ce nœud lui-même ou l'un de ses descendants.
+  bool contains(JsonNode other) {
+    for (JsonNode? p = other; p != null; p = p.parent) {
+      if (identical(p, this)) return true;
+    }
+    return false;
+  }
+
   static JsonNode fromJson(dynamic v, {String? key}) => switch (v) {
     Map m => MapNode.fromJson(m, key: key),
     List l => ListNode.fromJson(l, key: key),
@@ -20,7 +28,7 @@ sealed class JsonNode {
   };
 }
 
-abstract class ContainerNode extends JsonNode {
+sealed class ContainerNode extends JsonNode {
   ContainerNode({super.key});
   final List<JsonNode> children = [];
   bool folded = false;

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
+import 'package:json_visual_editor/editor/drop_line.dart';
 import 'package:json_visual_editor/editor/node_clipboard.dart';
 import 'package:json_visual_editor/editor/node_menu.dart';
 import 'package:json_visual_editor/model/json_node.dart';
@@ -8,13 +10,15 @@ import 'package:json_visual_editor/theme/color.dart';
 enum _Editing { none, key, value }
 
 class NodeTile extends StatefulWidget {
-  NodeTile({required this.node, required this.edit, required this.clipboard}) : super(key: ValueKey(node));
+  NodeTile({required this.node, required this.edit, required this.clipboard, required this.dragging}) : super(key: ValueKey(node));
 
   final JsonNode node;
 
   final void Function(VoidCallback) edit;
 
   final NodeClipboard clipboard;
+
+  final ValueNotifier<bool> dragging;
 
   @override
   State<NodeTile> createState() => _NodeTileState();
@@ -81,16 +85,77 @@ class _NodeTileState extends State<NodeTile> {
     onSubmitted: _submit,
   );
 
+  Widget _handle() {
+    final n = node;
+    final icon = GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onSecondaryTapDown: (details) => _menu(details.globalPosition),
+      onTap: n is ContainerNode ? () => setState(() => n.folded = !n.folded) : null,
+      child: _TypeIcon(node: n, dragging: widget.dragging),
+    );
+
+    if (n.parent == null) return icon;
+
+    return Draggable<JsonNode>(
+      data: n,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: _feedback(),
+      childWhenDragging: Opacity(opacity: 0.3, child: icon),
+      onDragStarted: () {
+        Tooltip.dismissAllToolTips();
+        widget.dragging.value = true;
+      },
+      onDragEnd: (_) => widget.dragging.value = false,
+      child: icon,
+    );
+  }
+
+  Widget _feedback() {
+    final n = node;
+    final label = switch (n) {
+      LeafNode leaf => leaf.key != null ? "${leaf.key}: ${leaf.text}" : leaf.text,
+      MapNode m => m.key ?? "{...}",
+      ListNode l => l.key ?? "[...]",
+    };
+
+    return Material(
+      elevation: 4.0,
+      borderRadius: BorderRadius.circular(4.0),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 240.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(n.icon, size: 16.0),
+            const SizedBox(width: 8.0),
+            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final n = node;
     return ListTile(
       contentPadding: const EdgeInsets.only(left: 16.0),
-      leading: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onSecondaryTapDown: (details) => _menu(details.globalPosition),
-        onTap: n is ContainerNode ? () => setState(() => n.folded = !n.folded) : null,
-        child: Icon(n.icon),
+      leading: DragTarget<JsonNode>(
+        onWillAcceptWithDetails: (d) => n is ContainerNode && !d.data.contains(n) && d.data != n.children.lastOrNull,
+        onAcceptWithDetails: (d) => widget.edit(() {
+          final c = n as ContainerNode;
+          c.add(d.data);
+          c.folded = false;
+        }),
+        builder: (context, candidates, _) => DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: candidates.isEmpty ? Colors.transparent : Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          child: _handle(),
+        ),
       ),
       trailing: n is LeafNode
           ? Row(
@@ -153,12 +218,56 @@ class _NodeTileState extends State<NodeTile> {
                     child: _editing == _Editing.key ? _field() : Text(container.key!),
                   ),
                 if (container.children.isEmpty)
-                  const SizedBox(height: 48.0)
-                else
-                  for (final child in container.children)
-                    NodeTile(node: child, edit: widget.edit, clipboard: widget.clipboard),
+                  DropLine(parent: container, index: 0, edit: widget.edit, height: 48.0)
+                else ...[
+                  for (final (i, child) in container.children.indexed) ...[
+                    DropLine(parent: container, index: i, edit: widget.edit),
+                    NodeTile(node: child, edit: widget.edit, clipboard: widget.clipboard, dragging: widget.dragging),
+                  ],
+                  DropLine(parent: container, index: container.children.length, edit: widget.edit),
+                ],
               ],
             ),
+    );
+  }
+}
+
+class _TypeIcon extends StatefulWidget {
+  const _TypeIcon({required this.node, required this.dragging});
+
+  final JsonNode node;
+  final ValueListenable<bool> dragging;
+
+  @override
+  State<_TypeIcon> createState() => _TypeIconState();
+}
+
+class _TypeIconState extends State<_TypeIcon> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = widget.node;
+    final draggable = n.parent != null;
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.dragging,
+      builder: (context, dragging, _) {
+        final active = draggable && !dragging;
+
+        return MouseRegion(
+          cursor: active ? SystemMouseCursors.grab : MouseCursor.defer,
+          onEnter: draggable ? (_) => setState(() => _hovered = true) : null,
+          onExit: draggable ? (_) => setState(() => _hovered = false) : null,
+          child: TooltipVisibility(
+            visible: active,
+            child: Tooltip(
+              message: "Drag and drop",
+              child: Icon(active && _hovered ? Icons.drag_indicator : n.icon),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -11,10 +11,13 @@ class Editor extends StatelessWidget {
 
   final NodeClipboard clipboard;
 
+  final ValueNotifier<bool> dragging;
+
   const Editor({
     super.key,
     required this.document,
-    required this.clipboard
+    required this.clipboard,
+    required this.dragging
   });
 
   @override
@@ -32,7 +35,7 @@ class Editor extends StatelessWidget {
       body: r != null
           ? ListView(
             children: [
-              NodeTile(node: r, edit: document.edit, clipboard: clipboard),
+              NodeTile(node: r, edit: document.edit, clipboard: clipboard, dragging: dragging),
               GestureDetector(
                 onSecondaryTapDown: (details) {
                   showContextMenu<void>(
